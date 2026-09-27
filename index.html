@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridLock Finder — Cross-Utility Construction Overlap Intelligence</title>
+<meta name="description" content="GridLock Finder compares utilities' public future construction plans and flags where planned work overlaps in space or time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --y:#FFD400;--y2:#FFE34D;--ys:#FFF8D1;--yd:#C9A700;
+  --k:#0A0A0A;--k2:#141414;--k3:#1F1F1F;--k4:#2A2A2A;
+  --bg:#F5F5F1;--card:#FFFFFF;--line:#E7E5DD;--line2:#F0EEE8;
+  --mut:#6B6A64;--mut2:#9C9A92;
+  --crit:#E5484D;--high:#F76B15;--mod:#FFD400;--low:#B5B3AA;
+  --r:18px;--sh:0 1px 2px rgba(10,10,10,.04),0 8px 24px -12px rgba(10,10,10,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--k);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.45;overflow:hidden}
+h1,h2,h3,h4,.disp{font-family:'Space Grotesk',Inter,sans-serif;letter-spacing:-.025em;font-weight:600}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+::selection{background:var(--y);color:var(--k)}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#d7d5cc;border-radius:99px;border:3px solid transparent;background-clip:content-box}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:252px 1fr;height:100vh}
+.side{background:var(--k);color:#fff;display:flex;flex-direction:column;padding:20px 14px 16px;gap:4px;position:relative;overflow:hidden}
+.side:before{content:'';position:absolute;inset:auto -80px -120px -80px;height:260px;background:radial-gradient(closest-side,rgba(255,212,0,.16),transparent);pointer-events:none}
+.logo{display:flex;align-items:center;gap:11px;padding:4px 8px 24px}
+.logo-mark{width:36px;height:36px;border-radius:11px;background:var(--y);display:grid;place-items:center;color:var(--k);box-shadow:0 0 0 4px rgba(255,212,0,.12)}
+.logo-t{font-family:'Space Grotesk';font-weight:700;font-size:18px;letter-spacing:-.03em;line-height:1}
+.logo-t small{display:block;font-family:Inter;font-weight:500;font-size:10.5px;letter-spacing:.14em;color:#8d8b84;text-transform:uppercase;margin-top:4px}
+.nav-l{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#6f6d66;padding:14px 12px 6px;font-weight:600}
+.nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:11px;color:#B9B7B0;text-decoration:none;font-weight:500;cursor:pointer;transition:background .15s,color .15s}
+.nav a:hover{background:#1a1a1a;color:#fff}
+.nav a.on{background:var(--y);color:var(--k);font-weight:600}
+.nav a .ct{margin-left:auto;font-size:11px;font-weight:600;background:#262626;color:#fff;padding:2px 8px;border-radius:99px}
+.nav a.on .ct{background:var(--k);color:var(--y)}
+.nav a .ct.hot{background:var(--crit);color:#fff}
+.side-foot{margin-top:auto;position:relative}
+.ws{background:#161616;border:1px solid #242424;border-radius:14px;padding:12px}
+.ws label{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#77756e;font-weight:600}
+.ws select{width:100%;margin-top:6px;background:#0f0f0f;border:1px solid #2a2a2a;color:#fff;border-radius:9px;padding:8px 10px;outline:none}
+.ws .me{display:flex;align-items:center;gap:10px;margin-top:10px}
+.av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--y),#ffb800);color:var(--k);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.ws .me b{font-size:12.5px;display:block}.ws .me span{font-size:11px;color:#8d8b84}
+
+main{display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden}
+.top{height:66px;flex:none;display:flex;align-items:center;gap:16px;padding:0 28px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.85);backdrop-filter:blur(12px);z-index:5}
+.crumb{display:flex;flex-direction:column}
+.crumb small{font-size:11px;color:var(--mut2);font-weight:500;letter-spacing:.02em}
+.crumb b{font-family:'Space Grotesk';font-size:18px;letter-spacing:-.02em;font-weight:600}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:0 12px;height:40px;width:340px;color:var(--mut)}
+.search input{border:0;background:none;outline:none;flex:1;height:100%}
+.search kbd{font:600 10.5px Inter;background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 6px;color:var(--mut)}
+.pill-demo{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:99px;background:var(--k);color:#fff;font-size:12px;font-weight:600}
+.pill-demo i{width:7px;height:7px;border-radius:50%;background:var(--y);box-shadow:0 0 0 3px rgba(255,212,0,.25);animation:blink 2s infinite}
+.sync{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);font-weight:500}
+.sync i{width:8px;height:8px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+@keyframes blink{50%{opacity:.35}}
+
+.page{display:none;flex:1;overflow:auto;padding:28px 32px 48px}
+.page.on{display:block;animation:fade .35s ease}
+.page.full{padding:0;overflow:hidden}
+.page.full.on{display:flex}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- primitives ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:12px;font-weight:600;font-size:13.5px;transition:transform .12s,background .15s,box-shadow .15s;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn.y{background:var(--y);color:var(--k);box-shadow:0 1px 0 rgba(0,0,0,.08),inset 0 -2px 0 rgba(0,0,0,.08)}
+.btn.y:hover{background:var(--y2)}
+.btn.k{background:var(--k);color:#fff}.btn.k:hover{background:#222}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--k)}.btn.ghost:hover{border-color:#cfccc2}
+.btn.sm{height:34px;padding:0 12px;font-size:12.5px;border-radius:10px}
+.btn.lg{height:52px;padding:0 26px;font-size:15px;border-radius:14px}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--sh)}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.card-h h3{font-size:16px}
+.card-h p{font-size:12.5px;color:var(--mut);margin-top:2px}
+.lnk{font-size:12.5px;font-weight:600;color:var(--k);cursor:pointer;border-bottom:2px solid var(--y)}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--mut)}
+.sev{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px}
+.sev:before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.sev.critical{background:#FDECEC;color:#C8282E}
+.sev.high{background:#FFEFE3;color:#D0540A}
+.sev.moderate{background:var(--ys);color:#8A7300}
+.sev.low{background:#F1F0EC;color:#7a786f}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:8px;background:var(--bg);border:1px solid var(--line);color:#3a3934}
+.tag .dot{width:8px;height:8px;border-radius:3px}
+.kind{font-size:11px;font-weight:600;color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{height:32px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:#fff;font-size:12.5px;font-weight:600;color:#3a3934;transition:.15s}
+.chip:hover{border-color:#c9c6bb}
+.chip.on{background:var(--k);color:#fff;border-color:var(--k)}
+.chip.y.on{background:var(--y);color:var(--k);border-color:var(--y)}
+
+/* ---------- dashboard ---------- */
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px}
+.hero h1{font-size:34px;margin:6px 0 8px;line-height:1.1}
+.hero .sub{color:var(--mut);max-width:680px;font-size:15px}
+.hero .sub b{color:var(--k);background:linear-gradient(transparent 62%,var(--y) 62%);padding:0 2px}
+.hero-actions{display:flex;gap:10px;flex:none}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.kpi{position:relative;overflow:hidden}
+.kpi .ic{width:38px;height:38px;border-radius:11px;background:var(--ys);color:var(--k);display:grid;place-items:center;margin-bottom:14px}
+.kpi.dark{background:var(--k);color:#fff;border-color:var(--k)}
+.kpi.dark .ic{background:var(--y)}
+.kpi .v{font-family:'Space Grotesk';font-size:34px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.kpi .l{font-size:12.5px;color:var(--mut);font-weight:500;margin-top:6px}
+.kpi.dark .l{color:#a9a79f}
+.kpi .d{position:absolute;top:20px;right:20px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;background:#EAF7EE;color:#1a7f3c}
+.kpi.dark .d{background:rgba(255,212,0,.15);color:var(--y)}
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:16px}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--mut);font-weight:500}
+.legend span{display:flex;align-items:center;gap:6px}.legend i{width:10px;height:10px;border-radius:3px}
+.clist .ci{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:12px;border-radius:14px;cursor:pointer;transition:background .15s}
+.clist .ci:hover{background:var(--bg)}
+.clist .ci+.ci{border-top:1px solid var(--line2)}
+.ring{width:44px;height:44px;flex:none;position:relative;display:grid;place-items:center;font-family:'Space Grotesk';font-weight:700;font-size:13px}
+.ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ci .t{font-weight:600;font-size:13.5px;line-height:1.3}
+.ci .t em{font-style:normal;color:var(--mut2);font-weight:500;padding:0 4px}
+.ci .m{display:flex;gap:10px;align-items:center;margin-top:5px;font-size:12px;color:var(--mut);flex-wrap:wrap}
+.ci .s{text-align:right;font-size:12px;color:var(--mut)}
+.ci .s b{display:block;font-family:'Space Grotesk';font-size:16px;color:var(--k)}
+.darkcard{background:var(--k);color:#fff;border-color:var(--k);position:relative;overflow:hidden}
+.darkcard:after{content:'';position:absolute;right:-60px;top:-60px;width:220px;height:220px;background:radial-gradient(closest-side,rgba(255,212,0,.25),transparent)}
+.ferc{padding-bottom:18px;border-bottom:1px solid #262626;margin-bottom:14px;position:relative;z-index:1}
+.ferc .eyebrow{color:var(--y)}
+.ferc h3{font-size:20px;margin:8px 0 6px;line-height:1.2}
+.ferc p{color:#b1afa7;font-size:13px}
+.feed{position:relative;z-index:1}
+.feed .fi{display:flex;gap:12px;padding:9px 0;font-size:12.5px;color:#d6d4cc}
+.feed .fi i{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:#555}
+.feed .fi i.y{background:var(--y)}.feed .fi i.r{background:var(--crit)}.feed .fi i.g{background:#22C55E}
+.feed .fi small{display:block;color:#77756e;font-size:11px;margin-top:1px}
+.feed .fi b{color:#fff}
+.chart text{font-family:Inter;font-size:11px;fill:#8a887f}
+.hbar{display:flex;flex-direction:column;gap:14px}
+.hbar .row{display:grid;grid-template-columns:120px 1fr 36px;gap:12px;align-items:center;font-size:12.5px;font-weight:600}
+.hbar .track{height:12px;background:var(--line2);border-radius:99px;overflow:hidden}
+.hbar .fill{height:100%;background:var(--k);border-radius:99px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.hbar .fill.y{background:var(--y)}
+.hbar .n{text-align:right;font-family:'Space Grotesk'}
+.split{display:flex;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line2)}
+.split div{flex:1;background:var(--bg);border-radius:12px;padding:12px}
+.split b{font-family:'Space Grotesk';font-size:20px;display:block}
+.split span{font-size:11.5px;color:var(--mut)}
+
+/* ---------- map page ---------- */
+.mp-panel{width:400px;flex:none;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.mp-head{padding:22px 22px 8px}
+.mp-head h2{font-size:22px}
+.mp-head p{color:var(--mut);font-size:12.5px;margin-top:4px}
+.ctl{padding:10px 22px 16px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--line)}
+.rng label{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-bottom:8px}
+.rng label b{font-family:'Space Grotesk';background:var(--k);color:var(--y);padding:1px 8px;border-radius:7px;font-size:12px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;background:linear-gradient(90deg,var(--k) var(--p,30%),var(--line) var(--p,30%));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--y);border:3px solid var(--k);cursor:grab;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--y);border:3px solid var(--k);cursor:grab}
+.tog{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;color:#3a3934;cursor:pointer;user-select:none}
+.tog input{display:none}
+.tog .sw{width:34px;height:20px;border-radius:99px;background:var(--line);position:relative;transition:.2s;flex:none}
+.tog .sw:after{content:'';position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.2s}
+.tog input:checked+.sw{background:var(--k)}
+.tog input:checked+.sw:after{left:16px;background:var(--y)}
+.utils{display:flex;flex-wrap:wrap;gap:6px}
+.ut{display:flex;align-items:center;gap:7px;height:30px;padding:0 10px;border-radius:9px;border:1px solid var(--line);font-size:12px;font-weight:600;background:#fff;transition:.15s}
+.ut i{width:10px;height:10px;border-radius:3px}
+.ut.off{opacity:.4;text-decoration:line-through}
+.mp-list-h{display:flex;align-items:center;justify-content:space-between;padding:14px 22px 8px;font-weight:600;font-size:13px}
+.mp-list-h span b{font-family:'Space Grotesk';font-size:16px}
+.mp-list{flex:1;overflow:auto;padding:0 12px 20px}
+.mp-list .ci.sel{background:var(--ys);outline:2px solid var(--y)}
+.mp-map{flex:1;position:relative;min-width:0}
+#mapMain,#mapPlan{position:absolute;inset:0;background:#EDEDE8}
+.map-legend{position:absolute;left:16px;bottom:16px;z-index:500;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:var(--sh);font-size:11.5px;display:flex;flex-direction:column;gap:6px;min-width:190px}
+.map-legend b{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
+.map-legend div{display:flex;align-items:center;gap:8px;font-weight:500}
+.map-legend .ln{width:18px;height:4px;border-radius:2px}
+.map-legend .pn{width:12px;height:12px;border-radius:50%;background:var(--crit);border:2px solid #fff;box-shadow:0 0 0 3px rgba(229,72,77,.25)}
+.map-stats{position:absolute;left:16px;top:16px;z-index:500;display:flex;gap:8px}
+.map-stats div{background:var(--k);color:#fff;border-radius:12px;padding:8px 14px;font-size:11.5px;color:#bdbbb3;box-shadow:var(--sh)}
+.map-stats div b{display:block;font-family:'Space Grotesk';font-size:18px;color:#fff;line-height:1.1}
+.map-stats div.y{background:var(--y);color:#3a3000}.map-stats div.y b{color:var(--k)}
+.drawer{position:absolute;right:16px;top:16px;bottom:16px;width:430px;z-index:600;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 60px -20px rgba(0,0,0,.35);display:flex;flex-direction:column;transform:translateX(calc(100% + 24px));transition:transform .35s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+.drawer.on{transform:none}
+.dr-h{padding:18px 20px 14px;border-bottom:1px solid var(--line2);position:relative}
+.dr-h .x{position:absolute;right:14px;top:14px}
+.dr-h h3{font-size:18px;line-height:1.25;margin-top:10px;padding-right:30px}
+.dr-b{flex:1;overflow:auto;padding:16px 20px 20px;display:flex;flex-direction:column;gap:16px}
+.dr-f{padding:14px 20px;border-top:1px solid var(--line2);display:flex;gap:8px}
+.icon-btn{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--mut);transition:.15s}
+.icon-btn:hover{background:var(--bg);color:var(--k)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.metrics div{background:var(--bg);border-radius:12px;padding:10px}
+.metrics b{display:block;font-family:'Space Grotesk';font-size:17px;line-height:1.1}
+.metrics span{font-size:10.5px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.metrics div.k{background:var(--k);color:#fff}.metrics div.k span{color:var(--y)}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pcard{border:1px solid var(--line);border-radius:14px;padding:12px;position:relative;overflow:hidden;cursor:pointer;transition:.15s}
+.pcard:hover{border-color:#c9c6bb}
+.pcard:before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.pcard .u{font-size:11px;font-weight:700;color:var(--mut)}
+.pcard .n{font-weight:600;font-size:13px;line-height:1.3;margin:4px 0 8px}
+.pcard .f{font-size:11.5px;color:var(--mut);display:flex;flex-direction:column;gap:2px}
+.sec-t{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--mut);margin-bottom:8px}
+.mtl{position:relative;height:74px;background:var(--bg);border-radius:12px;padding:10px 12px}
+.mtl .bar{position:absolute;height:18px;border-radius:6px;font-size:10.5px;font-weight:600;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden}
+.mtl .ov{position:absolute;top:6px;bottom:6px;background:repeating-linear-gradient(135deg,rgba(229,72,77,.18) 0 6px,rgba(229,72,77,.06) 6px 12px);border-left:2px solid var(--crit);border-right:2px solid var(--crit)}
+.mtl .gp{position:absolute;top:34px;height:2px;border-top:2px dashed var(--mut2)}
+.reco{background:var(--ys);border:1px solid #F5E08A;border-radius:14px;padding:14px;font-size:13px;line-height:1.5}
+.reco .h{display:flex;align-items:center;gap:8px;font-weight:700;font-size:12px;margin-bottom:6px}
+.reco .h span{background:var(--k);color:var(--y);border-radius:6px;padding:1px 7px;font-size:10.5px;letter-spacing:.06em}
+
+/* leaflet skin */
+.leaflet-container{font-family:Inter,sans-serif}
+.leaflet-tooltip.gl-tip{background:var(--k);color:#fff;border:0;border-radius:9px;padding:7px 10px;font:600 12px Inter;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.leaflet-tooltip-top.gl-tip:before{border-top-color:var(--k)}
+.leaflet-tooltip.gl-tip small{display:block;font-weight:500;color:#a9a79f;font-size:11px}
+.leaflet-control-zoom{border:0!important;box-shadow:var(--sh)!important;border-radius:12px!important;overflow:hidden}
+.leaflet-control-zoom a{width:36px!important;height:36px!important;line-height:36px!important;color:var(--k)!important;border-color:var(--line)!important}
+.cf-pin{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;position:relative;cursor:pointer}
+.cf-pin span{width:14px;height:14px;border-radius:50%;background:var(--c);border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);position:relative;z-index:1}
+.cf-pin:after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--c);opacity:.25;animation:ping 2s cubic-bezier(0,0,.2,1) infinite}
+.cf-pin.big span{width:18px;height:18px}
+@keyframes ping{0%{transform:scale(.5);opacity:.5}80%,100%{transform:scale(1.9);opacity:0}}
+.vx{width:14px;height:14px;border-radius:50%;background:var(--y);border:3px solid var(--k)}
+
+/* ---------- timeline ---------- */
+.tl-wrap{padding:0;overflow:hidden}
+.tl-top{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line)}
+.tl{position:relative;overflow:auto;max-height:calc(100vh - 250px)}
+.tl-grid{display:grid;grid-template-columns:300px 1fr;min-width:1100px}
+.tl-h{position:sticky;top:0;z-index:4;background:#fff;border-bottom:1px solid var(--line);height:52px}
+.tl-h.nm{left:0;z-index:5;display:flex;align-items:flex-end;padding:0 18px 10px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.tl-q{position:absolute;bottom:0;height:52px;border-left:1px solid var(--line2);font-size:11px;color:var(--mut);padding:26px 0 0 8px;font-weight:600}
+.tl-q.yr{border-left:1px solid #cfccc2}
+.tl-q .yl{position:absolute;top:8px;left:8px;font-family:'Space Grotesk';font-size:13px;color:var(--k);font-weight:700}
+.tl-name{position:sticky;left:0;z-index:3;background:#fff;border-right:1px solid var(--line);padding:0 18px;height:44px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--line2);cursor:pointer}
+.tl-name b{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-name span{font-size:11px;color:var(--mut2);font-weight:600}
+.tl-name:hover b{text-decoration:underline;text-decoration-color:var(--y);text-decoration-thickness:3px}
+.tl-track{position:relative;height:44px;border-bottom:1px solid var(--line2)}
+.tl-grp{grid-column:1/-1;display:flex;align-items:center;gap:10px;height:38px;padding:0 18px;background:var(--bg);border-bottom:1px solid var(--line);font-weight:700;font-size:12.5px;position:sticky;left:0}
+.tl-grp i{width:10px;height:10px;border-radius:3px}
+.tl-grp span{font-weight:500;color:var(--mut);font-size:12px}
+.tl-bar{position:absolute;top:9px;height:26px;border-radius:8px;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;cursor:pointer;transition:transform .12s,box-shadow .12s;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.tl-bar:hover{transform:translateY(-1px);box-shadow:0 6px 16px -6px rgba(0,0,0,.35)}
+.tl-bar.hot{outline:2.5px solid var(--crit);outline-offset:2px}
+.tl-bar.new{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.15) 0 8px,transparent 8px 16px)}
+.tl-ov{position:absolute;top:4px;bottom:4px;background:repeating-linear-gradient(135deg,rgba(229,72,77,.22) 0 5px,rgba(229,72,77,.06) 5px 10px);border-radius:6px;pointer-events:none;z-index:2;border:1px dashed rgba(229,72,77,.6)}
+.tl-today{position:absolute;top:0;bottom:0;width:2px;background:var(--k);z-index:2;pointer-events:none}
+.tl-today:before{content:'TODAY';position:absolute;top:4px;left:-22px;background:var(--y);color:var(--k);font-size:9.5px;font-weight:800;letter-spacing:.08em;padding:2px 6px;border-radius:5px}
+.tl-bg{position:absolute;inset:0;pointer-events:none}
+.tl-bg i{position:absolute;top:0;bottom:0;border-left:1px solid var(--line2)}
+.tip{position:fixed;z-index:3000;pointer-events:none;background:var(--k);color:#fff;border-radius:12px;padding:10px 12px;font-size:12px;box-shadow:0 12px 30px rgba(0,0,0,.3);max-width:300px;opacity:0;transition:opacity .12s}
+.tip.on{opacity:1}
+.tip small{color:#a9a79f;display:block}
+.tip b{color:var(--y)}
+
+/* ---------- plan ---------- */
+.pl-panel{width:440px;flex:none;background:#fff;border-right:1px solid var(--line);overflow:auto;padding:22px 22px 40px}
+.pl-panel h2{font-size:22px}
+.pl-panel>p{color:var(--mut);font-size:12.5px;margin:4px 0 18px}
+.step{border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.step-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-weight:700;font-size:13.5px}
+.step-h i{width:24px;height:24px;border-radius:8px;background:var(--k);color:var(--y);display:grid;place-items:center;font-style:normal;font-size:12px;font-family:'Space Grotesk'}
+.step-h.done i{background:var(--y);color:var(--k)}
+.fld{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.fld label{font-size:11.5px;font-weight:600;color:var(--mut)}
+.fld input,.fld select,.fld textarea{height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff;outline:none;transition:border .15s,box-shadow .15s;width:100%}
+.fld textarea{height:auto;padding:10px 12px;resize:vertical;min-height:120px;line-height:1.5}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--k);box-shadow:0 0 0 3px rgba(255,212,0,.45)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;background:var(--bg);border-radius:11px;padding:3px;gap:3px;margin-bottom:10px}
+.seg button{flex:1;height:34px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--mut);display:flex;align-items:center;justify-content:center;gap:6px}
+.seg button.on{background:#fff;color:var(--k);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.draw-info{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--mut);background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.draw-info b{color:var(--k)}
+.draw-acts{display:flex;gap:6px}
+.map-hint{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:500;background:var(--k);color:#fff;border-radius:99px;padding:9px 16px;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:var(--sh)}
+.map-hint b{color:var(--y)}
+.res-h{background:var(--k);color:#fff;border-radius:16px;padding:18px;margin:16px 0 12px;position:relative;overflow:hidden}
+.res-h:after{content:'';position:absolute;right:-40px;top:-40px;width:160px;height:160px;background:radial-gradient(closest-side,rgba(255,212,0,.3),transparent)}
+.res-h .eyebrow{color:var(--y)}
+.res-h h3{font-size:22px;margin:6px 0 4px}
+.res-h p{color:#b1afa7;font-size:12.5px}
+.res-h .rs{display:flex;gap:8px;margin-top:14px;position:relative;z-index:1}
+.res-h .rs div{flex:1;background:#1a1a1a;border-radius:10px;padding:10px}
+.res-h .rs b{display:block;font-family:'Space Grotesk';font-size:18px}
+.res-h .rs span{font-size:10.5px;color:#8d8b84;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.rc{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;transition:.15s;cursor:pointer}
+.rc:hover{border-color:#c9c6bb;box-shadow:var(--sh)}
+.rc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.rc .n{font-weight:600;font-size:13.5px}
+.rc .u{font-size:12px;color:var(--mut);margin-top:2px;display:flex;align-items:center;gap:6px}
+.rc .u i{width:8px;height:8px;border-radius:3px}
+.rc .why{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.rc .acts{display:flex;gap:6px}
+.clean{text-align:center;padding:26px 16px;border:1px dashed var(--line);border-radius:16px;color:var(--mut)}
+.clean .big{width:52px;height:52px;border-radius:16px;background:#EAF7EE;color:#1a7f3c;display:grid;place-items:center;margin:0 auto 10px}
+
+/* ---------- table ---------- */
+.tbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.tbar .fld{margin:0}
+.tbar input,.tbar select{height:40px;border:1px solid var(--line);border-radius:11px;padding:0 12px;background:#fff;outline:none}
+.tbar input{width:300px}
+table{width:100%;border-collapse:separate;border-spacing:0}
+th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:700;padding:12px 14px;border-bottom:1px solid var(--line);background:#FBFBF9;position:sticky;top:0;white-space:nowrap}
+td{padding:13px 14px;border-bottom:1px solid var(--line2);font-size:13px;vertical-align:middle}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover{background:#FDFCF6}
+td .pn{font-weight:600}
+td .pid{font-size:11.5px;color:var(--mut2);font-weight:600}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.st i{width:7px;height:7px;border-radius:50%}
+.ovb{display:inline-grid;place-items:center;min-width:26px;height:22px;border-radius:7px;font-size:12px;font-weight:700;padding:0 6px}
+.ovb.z{background:var(--bg);color:var(--mut2)}
+.ovb.p{background:var(--k);color:var(--y)}
+.newb{font-size:9.5px;font-weight:800;letter-spacing:.08em;background:var(--y);color:var(--k);padding:2px 6px;border-radius:5px;margin-left:6px;vertical-align:2px}
+.tcard{padding:0;overflow:hidden}
+.tscroll{overflow:auto;max-height:calc(100vh - 230px)}
+
+/* ---------- sources ---------- */
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:18px;background:var(--k);border-radius:var(--r);padding:8px;color:#fff}
+.pipe>div{padding:18px;position:relative;border-radius:12px}
+.pipe>div:not(:last-child):after{content:'';position:absolute;right:-7px;top:50%;width:14px;height:14px;background:var(--k);border-top:2px solid var(--y);border-right:2px solid var(--y);transform:translateY(-50%) rotate(45deg);z-index:1}
+.pipe>div.on{background:#1a1a1a}
+.pipe .n{font-family:'Space Grotesk';color:var(--y);font-size:12px;font-weight:700}
+.pipe h4{font-size:16px;margin:4px 0 4px}
+.pipe p{font-size:12px;color:#a9a79f}
+.srcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.src{display:flex;flex-direction:column;gap:12px}
+.src-h{display:flex;gap:12px;align-items:flex-start}
+.src-ic{width:42px;height:42px;border-radius:12px;background:var(--k);color:var(--y);display:grid;place-items:center;font-family:'Space Grotesk';font-weight:700;font-size:13px;flex:none}
+.src-h b{font-size:14px;display:block;line-height:1.3}
+.src-h span{font-size:12px;color:var(--mut)}
+.src-s{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.src-s div{background:var(--bg);border-radius:10px;padding:8px 10px}
+.src-s b{font-family:'Space Grotesk';font-size:15px;display:block}
+.src-s span{font-size:10.5px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.prog{height:6px;background:var(--line2);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;width:100%;background:var(--k);border-radius:99px;transition:width .2s}
+.prog.run i{background:var(--y)}
+.src-f{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--mut)}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:#EAF7EE;color:#1a7f3c}
+.live:before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.live.ai{background:var(--ys);color:#8A7300}
+.live.run{background:var(--k);color:var(--y)}
+.model{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:16px}
+.formula{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12.5px;background:var(--k);color:#e9e7df;border-radius:14px;padding:16px;line-height:1.8;overflow:auto}
+.formula .c{color:#77756e}.formula .y{color:var(--y)}
+
+/* ---------- modal / sheet / toast ---------- */
+.scrim{position:fixed;inset:0;background:rgba(10,10,10,.45);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:24px}
+.scrim.on{display:flex;animation:fade .2s}
+.modal{background:#fff;border-radius:22px;width:560px;max-width:100%;max-height:90vh;overflow:auto;box-shadow:0 40px 80px -20px rgba(0,0,0,.5)}
+.modal.dark{background:var(--k);color:#fff}
+.m-h{padding:22px 24px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.m-h h3{font-size:20px}
+.m-b{padding:16px 24px 24px}
+.scan-steps{display:flex;flex-direction:column;gap:4px;margin:18px 0}
+.ss{display:flex;align-items:center;gap:12px;padding:9px 0;font-size:13px;color:#77756e;transition:color .2s}
+.ss i{width:22px;height:22px;border-radius:50%;border:2px solid #333;display:grid;place-items:center;flex:none;transition:.2s}
+.ss.run{color:#fff}.ss.run i{border-color:var(--y);border-top-color:transparent;animation:spin .7s linear infinite}
+.ss.done{color:#d6d4cc}.ss.done i{background:var(--y);border-color:var(--y);color:var(--k)}
+.ss small{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#77756e}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bigbar{height:8px;background:#222;border-radius:99px;overflow:hidden}
+.bigbar i{display:block;height:100%;width:0;background:var(--y);border-radius:99px;transition:width .3s}
+.sheet{position:fixed;top:0;right:0;bottom:0;width:520px;max-width:100%;background:#fff;z-index:2100;box-shadow:-30px 0 60px -20px rgba(0,0,0,.35);transform:translateX(105%);transition:transform .35s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+.sheet.on{transform:none}
+.sheet-scrim{position:fixed;inset:0;z-index:2050;background:rgba(10,10,10,.25);display:none}
+.sheet-scrim.on{display:block}
+.sh-h{padding:22px 24px 18px;border-bottom:1px solid var(--line2);position:relative}
+.sh-h h2{font-size:22px;line-height:1.2;margin:10px 40px 6px 0}
+.sh-h .x{position:absolute;top:16px;right:16px}
+.sh-b{flex:1;overflow:auto;padding:20px 24px;display:flex;flex-direction:column;gap:18px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.facts div{background:var(--bg);border-radius:12px;padding:10px 12px}
+.facts b{display:block;font-family:'Space Grotesk';font-size:16px}
+.facts span{font-size:10.5px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.cite{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12.5px}
+.cite .src-ic{width:34px;height:34px;font-size:11px;border-radius:10px}
+.toasts{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:4000;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:var(--k);color:#fff;border-radius:14px;padding:12px 16px 12px 12px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;box-shadow:0 16px 40px -10px rgba(0,0,0,.5);animation:tin .35s cubic-bezier(.2,.8,.2,1)}
+.toast i{width:26px;height:26px;border-radius:8px;background:var(--y);color:var(--k);display:grid;place-items:center;flex:none}
+.toast.out{animation:tout .3s forwards}
+@keyframes tin{from{opacity:0;transform:translateY(12px) scale(.96)}}
+@keyframes tout{to{opacity:0;transform:translateY(8px)}}
+
+/* ---------- intro ---------- */
+#intro{position:fixed;inset:0;z-index:5000;background:var(--k);color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:opacity .6s,visibility .6s}
+#intro.gone{opacity:0;visibility:hidden}
+#intro .grid{position:absolute;inset:-2px;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%)}
+#intro .glow{position:absolute;width:900px;height:900px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,212,0,.18),transparent);top:50%;left:50%;transform:translate(-50%,-50%)}
+#intro svg.lines{position:absolute;inset:0;width:100%;height:100%}
+#intro svg.lines path{fill:none;stroke:var(--y);stroke-width:1.5;stroke-dasharray:6 10;opacity:.35;animation:flow 3s linear infinite}
+#intro svg.lines circle{fill:var(--y)}
+#intro svg.lines circle.hit{fill:var(--crit);animation:blink 1.2s infinite}
+@keyframes flow{to{stroke-dashoffset:-64}}
+.intro-in{position:relative;text-align:center;max-width:820px;padding:24px}
+.intro-in .logo{justify-content:center;padding:0 0 30px}
+.intro-in .logo-mark{width:48px;height:48px;border-radius:14px}
+.intro-in .logo-t{font-size:24px}
+.intro-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid #333;border-radius:99px;padding:6px 14px 6px 8px;font-size:12.5px;color:#cfcdc5;margin-bottom:22px;background:rgba(255,255,255,.03)}
+.intro-badge span{background:var(--y);color:var(--k);font-weight:800;font-size:10.5px;border-radius:99px;padding:2px 8px;letter-spacing:.05em}
+.intro-in h1{font-size:64px;line-height:1.02;letter-spacing:-.045em;font-weight:700}
+.intro-in h1 em{font-style:normal;color:var(--y)}
+.intro-in p{color:#a9a79f;font-size:17px;max-width:640px;margin:20px auto 30px;line-height:1.55}
+.intro-stats{display:flex;justify-content:center;gap:34px;margin:0 0 34px}
+.intro-stats div{text-align:center}
+.intro-stats b{font-family:'Space Grotesk';font-size:30px;display:block;letter-spacing:-.03em}
+.intro-stats span{font-size:11.5px;color:#8d8b84;text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.intro-cta{display:flex;gap:10px;justify-content:center}
+.intro-cta .btn.ghost{background:transparent;color:#fff;border-color:#333}
+.intro-fine{margin-top:34px;font-size:11.5px;color:#66645e}
+.nomap{position:absolute;inset:0;display:grid;place-items:center;color:var(--mut);font-size:13px;text-align:center;padding:24px}
+@media (max-width:1200px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.search{display:none}.intro-in h1{font-size:46px}}
+</style>
+</head>
+<body>
+
+<!-- ============ INTRO ============ -->
+<div id="intro">
+  <div class="grid"></div>
+  <div class="glow"></div>
+  <svg class="lines" id="introLines" preserveAspectRatio="none"></svg>
+  <div class="intro-in">
+    <div class="logo"><div class="logo-mark" data-i="zap:26"></div><div class="logo-t" style="text-align:left">GridLock<small>Finder</small></div></div>
+    <div class="intro-badge"><span>FERC 1920</span> Interregional coordination, built in</div>
+    <h1>See every overlap<br>before it hits <em>the ground.</em></h1>
+    <p>GridLock Finder unifies utilities' public construction plans across state lines and flags where planned work collides — in space or in time — so crews, cranes and outage windows get shared instead of duplicated.</p>
+    <div class="intro-stats">
+      <div><b>3</b><span>States</span></div>
+      <div><b>5</b><span>Utilities</span></div>
+      <div><b id="iProj">32</b><span>Planned projects</span></div>
+      <div><b>8</b><span>Public sources</span></div>
+    </div>
+    <div class="intro-cta">
+      <button class="btn y lg" id="enter">Launch live demo <span data-i="arrow:18"></span></button>
+      <button class="btn ghost lg" id="enterPlan">Check my project</button>
+    </div>
+    <div class="intro-fine">ShellHacks · Sperry Tech "GridLock" Challenge &nbsp;·&nbsp; Demo build — all project data is synthetic, modeled on public filings (FERC, SERTP, state PSCs)</div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="side">
+    <div class="logo"><div class="logo-mark" data-i="zap:20"></div><div class="logo-t">GridLock<small>Finder</small></div></div>
+    <nav class="nav">
+      <a data-go="dash" class="on"><span data-i="dash"></span>Command Center</a>
+      <a data-go="map"><span data-i="map"></span>Overlap Map<span class="ct hot" id="navConf">0</span></a>
+      <a data-go="timeline"><span data-i="gantt"></span>Timeline</a>
+      <div class="nav-l">Contractor tools</div>
+      <a data-go="plan"><span data-i="plus"></span>Plan &amp; Check</a>
+      <a data-go="projects"><span data-i="list"></span>Project Registry<span class="ct" id="navProj">0</span></a>
+      <div class="nav-l">Data</div>
+      <a data-go="sources"><span data-i="db"></span>Public Data Sources</a>
+    </nav>
+    <div class="side-foot">
+      <div class="ws">
+        <label>Workspace</label>
+        <select id="role">
+          <option value="Keystone">Keystone Grid Constructors · Contractor</option>
+          <option value="Georgia Power">Georgia Power · Utility</option>
+          <option value="Duke Energy">Duke Energy Florida · Utility</option>
+          <option value="SERTP">SERTP Planning Committee · Regulator</option>
+        </select>
+        <div class="me"><div class="av" id="avatar">KG</div><div><b>Alex Rivera</b><span>Pre-construction lead</span></div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="top">
+      <div class="crumb"><small id="crumbS">Southeast Tri-State · FL · GA · AL</small><b id="crumbT">Command Center</b></div>
+      <div class="search"><span data-i="search:16"></span><input id="gsearch" placeholder="Search projects, utilities, counties…"><kbd>⌘K</kbd></div>
+      <div class="sync"><i></i><span id="syncTxt">Synced 12 min ago</span></div>
+      <div class="pill-demo"><i></i>DEMO · synthetic data</div>
+    </header>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="page on" id="p-dash">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Command Center · Southeast Tri-State Region</div>
+          <h1 id="greet">Good afternoon, Keystone.</h1>
+          <p class="sub"><b id="heroCount">0 overlaps</b> between neighboring utilities are active across Florida, Georgia and Alabama. Coordinating them could free up an estimated <b id="heroSave">$0M</b> in shared crews, equipment and outage windows.</p>
+        </div>
+        <div class="hero-actions"><button class="btn ghost" data-go="map"><span data-i="map:16"></span>Open overlap map</button><button class="btn y" data-go="plan"><span data-i="plus:16"></span>Check a new project</button></div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-h"><div><h3>Overlap pressure by quarter</h3><p>Conflict windows active in each quarter, stacked by severity</p></div>
+            <div class="legend"><span><i style="background:var(--crit)"></i>Critical</span><span><i style="background:var(--high)"></i>High</span><span><i style="background:var(--y)"></i>Moderate</span><span><i style="background:#D6D3C9"></i>Low</span></div></div>
+          <div id="chartQ" class="chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div><h3>Where utilities collide</h3><p>Overlaps by state boundary</p></div></div>
+          <div id="chartB" class="hbar"></div>
+          <div class="split" id="splitK"></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-h"><div><h3>Highest-priority overlaps</h3><p>Ranked by GridLock score (proximity × schedule)</p></div><a class="lnk" data-go="map">View all on map →</a></div>
+          <div class="clist" id="topList"></div>
+        </div>
+        <div class="card darkcard">
+          <div class="ferc">
+            <div class="eyebrow">Why this matters</div>
+            <h3>FERC Order 1920 requires utilities to plan together.</h3>
+            <p>Neighboring utilities have historically planned in isolation, leading to duplicated mobilizations, conflicting outages and delays. GridLock turns public filings into a shared picture — before the first crew rolls.</p>
+          </div>
+          <div class="eyebrow" style="color:#77756e;margin-bottom:4px;position:relative;z-index:1">Live activity</div>
+          <div class="feed" id="feed"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MAP ============ -->
+    <section class="page full" id="p-map">
+      <div class="mp-panel">
+        <div class="mp-head"><h2>Overlap Map</h2><p>Every public construction plan in the region, with overlaps flagged in real time as you tune the thresholds.</p></div>
+        <div class="ctl">
+          <div class="rng"><label>Proximity radius <b id="vD">10 km</b></label><input type="range" id="rD" min="1" max="40" value="10"></div>
+          <div class="rng"><label>Schedule window <b id="vT">90 days</b></label><input type="range" id="rT" min="0" max="365" step="15" value="90"></div>
+          <div class="chips" id="modeChips">
+            <button class="chip on" data-m="all">All overlaps</button>
+            <button class="chip" data-m="both">Space + Time</button>
+            <button class="chip" data-m="space">Proximity</button>
+            <button class="chip" data-m="time">Schedule</button>
+          </div>
+          <label class="tog"><input type="checkbox" id="cSame"><span class="sw"></span>Include same-utility overlaps</label>
+          <div class="utils" id="utilToggles"></div>
+        </div>
+        <div class="mp-list-h"><span><b id="confCount">0</b> overlaps flagged</span><button class="btn ghost sm" id="btnExport"><span data-i="download:14"></span>Export CSV</button></div>
+        <div class="mp-list clist" id="confList"></div>
+      </div>
+      <div class="mp-map">
+        <div id="mapMain"></div>
+        <div class="map-stats" id="mapStats"></div>
+        <div class="map-legend" id="mapLegend"></div>
+        <div class="drawer" id="drawer"></div>
+      </div>
+    </section>
+
+    <!-- ============ TIMELINE ============ -->
+    <section class="page" id="p-timeline">
+      <div class="hero" style="margin-bottom:18px">
+        <div><div class="eyebrow">Schedule view</div><h1 style="font-size:28px">Construction timeline</h1><p class="sub">Every planned project on one calendar. Hatched red windows show where two utilities are working near each other at the same time.</p></div>
+        <div class="hero-actions"><div class="chips" id="tlSort"><button class="chip on" data-s="util">Group by utility</button><button class="chip" data-s="start">Sort by start</button><button class="chip" data-s="risk">Sort by risk</button></div></div>
+      </div>
+      <div class="card tl-wrap"><div class="tl" id="tl"></div></div>
+    </section>
+
+    <!-- ============ PLAN ============ -->
+    <section class="page full" id="p-plan">
+      <div class="pl-panel" id="plPanel">
+        <div class="eyebrow">Contractor tools</div>
+        <h2 style="margin-top:6px">Plan &amp; Check</h2>
+        <p>Sketch the project you're bidding on or planning. GridLock checks it against every public utility plan in the region and tells you who you'll run into — and what you could share.</p>
+
+        <div class="step">
+          <div class="step-h"><i>1</i>Project basics</div>
+          <div class="fld"><label>Project name</label><input id="fName" value="Cairo–Havana 115kV Interconnect"></div>
+          <div class="row2">
+            <div class="fld"><label>Client utility</label><select id="fUtil"></select></div>
+            <div class="fld"><label>Work type</label><select id="fType"><option>New line</option><option>Line rebuild</option><option>Interstate tie</option><option>Substation</option><option>Undergrounding</option><option>Storm hardening</option><option>River crossing</option></select></div>
+          </div>
+          <div class="row2">
+            <div class="fld"><label>Mobilize</label><input type="date" id="fStart" value="2027-04-01"></div>
+            <div class="fld"><label>Demobilize</label><input type="date" id="fEnd" value="2028-01-31"></div>
+          </div>
+          <div class="row2">
+            <div class="fld"><label>Voltage (kV)</label><input type="number" id="fKv" value="115"></div>
+            <div class="fld"><label>Est. cost ($M)</label><input type="number" id="fCost" value="48"></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-h"><i>2</i>Crews &amp; equipment</div>
+          <div class="fld"><label>Peak crew size</label><input type="number" id="fCrew" value="32"></div>
+          <div class="chips" id="fEq"></div>
+        </div>
+
+        <div class="step">
+          <div class="step-h" id="stepLocH"><i>3</i>Location</div>
+          <div class="seg" id="drawMode"><button class="on" data-d="line"><span data-i="route:14"></span>Route</button><button data-d="pt"><span data-i="pin:14"></span>Site</button></div>
+          <div class="draw-info"><span id="drawInfo">Click the map to draw the route</span><div class="draw-acts"><button class="icon-btn" id="dUndo" data-tipx="Undo"><span data-i="undo:15"></span></button><button class="icon-btn" id="dClear"><span data-i="trash:15"></span></button></div></div>
+          <button class="btn ghost sm block" id="dSample"><span data-i="sparkle:14"></span>Load sample route (Cairo, GA → Havana, FL)</button>
+        </div>
+
+        <button class="btn y lg block" id="btnScan"><span data-i="zap:18"></span>Run GridLock scan</button>
+        <div id="plResults"></div>
+      </div>
+      <div class="mp-map">
+        <div id="mapPlan"></div>
+        <div class="map-hint" id="planHint"><span data-i="pin:14"></span>Click to add route points · <b>existing plans shown faded</b></div>
+        <div class="map-legend" id="planLegend"></div>
+      </div>
+    </section>
+
+    <!-- ============ PROJECTS ============ -->
+    <section class="page" id="p-projects">
+      <div class="hero" style="margin-bottom:18px">
+        <div><div class="eyebrow">Registry</div><h1 style="font-size:28px">Project registry</h1><p class="sub">Every planned project GridLock knows about — extracted from public filings or registered directly by contractors and utilities.</p></div>
+        <div class="hero-actions"><button class="btn y" data-go="plan"><span data-i="plus:16"></span>Register a project</button></div>
+      </div>
+      <div class="tbar">
+        <input id="tSearch" placeholder="Search by name, ID or source…">
+        <select id="tUtil"><option value="">All utilities</option></select>
+        <select id="tStatus"><option value="">All statuses</option><option>Planned</option><option>Permitting</option><option>Approved</option><option>In construction</option><option>Registered</option></select>
+        <label class="tog" style="margin-left:6px"><input type="checkbox" id="tOnly"><span class="sw"></span>Only with overlaps</label>
+        <span style="margin-left:auto;color:var(--mut);font-size:12.5px" id="tCount"></span>
+      </div>
+      <div class="card tcard"><div class="tscroll"><table><thead><tr><th>Project</th><th>Utility</th><th>Type</th><th>kV</th><th>Schedule</th><th>Status</th><th style="text-align:right">Cost</th><th style="text-align:center">Overlaps</th><th>Source</th></tr></thead><tbody id="tBody"></tbody></table></div></div>
+    </section>
+
+    <!-- ============ SOURCES ============ -->
+    <section class="page" id="p-sources">
+      <div class="hero" style="margin-bottom:18px">
+        <div><div class="eyebrow">Data pipeline</div><h1 style="font-size:28px">Public data sources</h1><p class="sub">GridLock continuously ingests public planning data, normalizes it into one schema with real geometry and dates, then runs overlap detection on every change.</p></div>
+        <div class="hero-actions"><button class="btn k" id="btnSync"><span data-i="refresh:16"></span>Sync all sources</button></div>
+      </div>
+      <div class="pipe" id="pipe">
+        <div><div class="n">01</div><h4>Ingest</h4><p>Pull filings, GIS layers and capital-plan PDFs from FERC, SERTP, state PSCs and HIFLD.</p></div>
+        <div><div class="n">02</div><h4>Normalize</h4><p>LLM extraction turns PDFs into rows; routes are geocoded and snapped to HIFLD corridors.</p></div>
+        <div><div class="n">03</div><h4>Detect</h4><p>Segment-level proximity + schedule-window overlap, scored and ranked per pair.</p></div>
+        <div><div class="n">04</div><h4>Coordinate</h4><p>Notify both planning teams with a shared brief and suggested resource-sharing plan.</p></div>
+      </div>
+      <div class="srcs" id="srcs"></div>
+      <div class="model">
+        <div class="card">
+          <div class="card-h"><div><h3>How overlap detection works</h3><p>Runs in your browser on every threshold change — no black box.</p></div></div>
+          <div class="formula">
+<span class="c">// 1. Spatial — min distance between any two route segments (km)</span><br>
+d = <span class="y">min</span>( segDist(a<sub>i</sub>, b<sub>j</sub>) )  <span class="c">// 0 if routes cross</span><br>
+<span class="c">// 2. Temporal — overlap or gap between build windows (days)</span><br>
+overlap = <span class="y">max</span>(0, min(endA, endB) − max(startA, startB))<br>
+gap &nbsp;&nbsp;&nbsp;&nbsp;= <span class="y">max</span>(0, max(startA, startB) − min(endA, endB))<br>
+<span class="c">// 3. Flag</span><br>
+SPACE+TIME  if d ≤ R  and gap ≤ W<br>
+PROXIMITY   if d ≤ R  <span class="c">(same corridor, different season)</span><br>
+SCHEDULE    if overlap &gt; 0 and d ≤ 3R <span class="c">(shared labor pool)</span><br>
+<span class="c">// 4. Score 0–100</span><br>
+score = 50 + 50·(0.6·(1 − d/R) + 0.4·s<sub>t</sub>)
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div><h3>Normalized schema</h3><p>One row per project, whatever the source.</p></div></div>
+          <div class="formula" style="background:#FBFBF9;color:#3a3934;border:1px solid var(--line)">
+{ <br>
+&nbsp;&nbsp;id: <span style="color:#8A7300">"GP-1041"</span>,<br>
+&nbsp;&nbsp;utility: <span style="color:#8A7300">"Georgia Power"</span>,<br>
+&nbsp;&nbsp;geometry: LineString[ … ],<br>
+&nbsp;&nbsp;window: [<span style="color:#8A7300">"2027-01-15"</span>, <span style="color:#8A7300">"2027-11-30"</span>],<br>
+&nbsp;&nbsp;kv: 230, cost_musd: 84, crew: 46,<br>
+&nbsp;&nbsp;equipment: [<span style="color:#8A7300">"80-ton crane"</span>, …],<br>
+&nbsp;&nbsp;source: <span style="color:#8A7300">"GA PSC IRP · Docket 56002"</span>,<br>
+&nbsp;&nbsp;confidence: 0.94<br>
+}
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
+<div class="sheet-scrim" id="sheetScrim"></div>
+<aside class="sheet" id="sheet"></aside>
+<div class="tip" id="tip"></div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* =====================================================================
+   GridLock Finder — single-file demo
+   All project data is synthetic, modeled on the shape of public filings.
+   ===================================================================== */
+
+// ---------- icons ----------
+const ICONS = {
+  dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  map:'<path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/>',
+  gantt:'<path d="M4 6h10"/><path d="M8 12h12"/><path d="M6 18h8"/>',
+  plus:'<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/><path d="M12 8v8"/>',
+  list:'<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
+  db:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>',
+  zap:'<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  route:'<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>',
+  pin:'<path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  undo:'<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+  trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  sparkle:'<path d="M12 3l1.9 5.8L20 10.7l-6.1 1.9L12 18.5l-1.9-5.9L4 10.7l6.1-1.9z"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  dollar:'<path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  layers:'<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>',
+  arrow:'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  ext:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
+};
+const I = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ''}</svg>`;
+function hydrateIcons(root = document) {
+  root.querySelectorAll('[data-i]').forEach(el => { const [n, s] = el.dataset.i.split(':'); el.innerHTML = I(n, +s || 18); el.style.display = 'inline-flex'; el.removeAttribute('data-i'); });
+}
+
+// ---------- data ----------
+const UTIL = {
+  FPL: { name: 'Florida Power & Light', short: 'FPL', state: 'FL', color: '#FFC700', ink: '#0A0A0A', contact: 'transmission.planning@fpl.example' },
+  DEF: { name: 'Duke Energy Florida', short: 'Duke Energy FL', state: 'FL', color: '#0A0A0A', ink: '#FFFFFF', contact: 'fl-grid-planning@duke-energy.example' },
+  GP:  { name: 'Georgia Power', short: 'Georgia Power', state: 'GA', color: '#2F6BFF', ink: '#FFFFFF', contact: 'tplanning@georgiapower.example' },
+  GTC: { name: 'Georgia Transmission', short: 'Georgia Transmission', state: 'GA', color: '#8B5CF6', ink: '#FFFFFF', contact: 'coordination@gatrans.example' },
+  APC: { name: 'Alabama Power', short: 'Alabama Power', state: 'AL', color: '#10A37F', ink: '#FFFFFF', contact: 'grid-projects@alabamapower.example' }
+};
+const EQUIP = ['Bucket trucks', 'Line stringing rig', '80-ton crane', 'Helicopter', 'Directional drill', 'Excavators', 'Transformer lowboy'];
+const STATUS_C = { 'Planned': '#B5B3AA', 'Permitting': '#F76B15', 'Approved': '#2F6BFF', 'In construction': '#22C55E', 'Registered': '#FFD400' };
+const SEV_C = { critical: '#E5484D', high: '#F76B15', moderate: '#FFD400', low: '#B5B3AA' };
+const KIND_L = { both: 'Space + Time', space: 'Proximity', time: 'Schedule' };
+
+const BASE = [
+ {id:'GP-1041',u:'GP',name:'Thomasville–Cairo 230kV Rebuild',type:'Line rebuild',status:'Approved',kv:230,cost:84,crew:46,start:'2027-01-15',end:'2027-11-30',eq:['Bucket trucks','Line stringing rig','80-ton crane','Helicopter'],src:'GA PSC 2025 IRP · Docket 56002',county:'Thomas / Grady, GA',geom:{k:'line',c:[[30.836,-83.978],[30.861,-84.09],[30.877,-84.202]]}},
+ {id:'DEF-2207',u:'DEF',name:'Monticello–Thomasville 115kV Tie Upgrade',type:'Interstate tie',status:'Permitting',kv:115,cost:61,crew:38,start:'2027-03-01',end:'2028-02-28',eq:['Bucket trucks','80-ton crane','Line stringing rig','Excavators'],src:'SERTP 2026 Regional Plan',county:'Jefferson, FL / Thomas, GA',geom:{k:'line',c:[[30.545,-83.871],[30.69,-83.93],[30.828,-83.965]]}},
+ {id:'GTC-3310',u:'GTC',name:'Bainbridge–Attapulgus 115kV Line',type:'New line',status:'Approved',kv:115,cost:47,crew:30,start:'2027-06-01',end:'2028-04-30',eq:['Bucket trucks','Line stringing rig','Directional drill'],src:'SERTP 2026 Regional Plan',county:'Decatur, GA',geom:{k:'line',c:[[30.903,-84.576],[30.83,-84.52],[30.758,-84.482]]}},
+ {id:'DEF-2215',u:'DEF',name:'Havana–Attapulgus 115kV State-Line Tie',type:'Interstate tie',status:'Planned',kv:115,cost:39,crew:26,start:'2027-08-15',end:'2028-06-30',eq:['Bucket trucks','Line stringing rig','Excavators'],src:'FL PSC Ten-Year Site Plan 2026',county:'Gadsden, FL',geom:{k:'line',c:[[30.624,-84.414],[30.69,-84.45],[30.748,-84.478]]}},
+ {id:'FPL-5102',u:'FPL',name:'Marianna–Chipley 230kV Line',type:'New line',status:'In construction',kv:230,cost:112,crew:58,start:'2026-08-01',end:'2027-09-30',eq:['Helicopter','Line stringing rig','Bucket trucks','80-ton crane'],src:'FL PSC Ten-Year Site Plan 2026',county:'Jackson / Washington, FL',geom:{k:'line',c:[[30.775,-85.227],[30.79,-85.38],[30.778,-85.538]]}},
+ {id:'APC-4420',u:'APC',name:'Dothan South 230kV Substation Expansion',type:'Substation',status:'Approved',kv:230,cost:73,crew:34,start:'2027-02-01',end:'2027-12-15',eq:['Transformer lowboy','80-ton crane','Excavators'],src:'AL PSC · 2026 Capital Plan Filing',county:'Houston, AL',geom:{k:'pt',c:[31.118,-85.402]}},
+ {id:'FPL-5118',u:'FPL',name:'Graceville–Dothan 230kV Interconnect',type:'Interstate tie',status:'Permitting',kv:230,cost:96,crew:44,start:'2027-05-01',end:'2028-06-30',eq:['Line stringing rig','80-ton crane','Bucket trucks','Helicopter'],src:'FERC Form 715 · 2026',county:'Jackson, FL / Houston, AL',geom:{k:'line',c:[[30.957,-85.517],[31.04,-85.46],[31.11,-85.405]]}},
+ {id:'GP-1055',u:'GP',name:'Valdosta North 230kV Substation',type:'Substation',status:'In construction',kv:230,cost:58,crew:28,start:'2026-10-15',end:'2027-06-30',eq:['Transformer lowboy','80-ton crane','Excavators'],src:'GA PSC 2025 IRP',county:'Lowndes, GA',geom:{k:'pt',c:[30.902,-83.281]}},
+ {id:'DEF-2231',u:'DEF',name:'Madison–Quitman 115kV Line',type:'Interstate tie',status:'Approved',kv:115,cost:52,crew:32,start:'2027-01-10',end:'2027-12-20',eq:['Bucket trucks','Line stringing rig','Directional drill'],src:'SERTP 2026 Regional Plan',county:'Madison, FL / Brooks, GA',geom:{k:'line',c:[[30.469,-83.413],[30.64,-83.5],[30.776,-83.556]]}},
+ {id:'GP-1062',u:'GP',name:'Quitman 115kV Substation Upgrade',type:'Substation',status:'Planned',kv:115,cost:21,crew:16,start:'2027-04-01',end:'2027-10-31',eq:['Transformer lowboy','Bucket trucks','Excavators'],src:'GA PSC 2025 IRP',county:'Brooks, GA',geom:{k:'pt',c:[30.785,-83.56]}},
+ {id:'APC-4433',u:'APC',name:'Enterprise–Geneva 115kV Rebuild',type:'Line rebuild',status:'Approved',kv:115,cost:44,crew:29,start:'2026-12-01',end:'2027-08-31',eq:['Bucket trucks','Line stringing rig'],src:'AL PSC · 2026 Capital Plan Filing',county:'Coffee / Geneva, AL',geom:{k:'line',c:[[31.315,-85.855],[31.17,-85.86],[31.032,-85.862]]}},
+ {id:'FPL-5125',u:'FPL',name:'Geneva Tie Storm Hardening',type:'Storm hardening',status:'Planned',kv:115,cost:33,crew:24,start:'2027-07-01',end:'2028-03-31',eq:['Bucket trucks','Excavators','Line stringing rig'],src:'FL PSC Storm Protection Plan 2026',county:'Holmes, FL',geom:{k:'line',c:[[30.985,-85.85],[30.9,-85.78],[30.8,-85.7]]}},
+ {id:'GP-1070',u:'GP',name:'Albany–Camilla 230kV Line',type:'New line',status:'Planned',kv:230,cost:128,crew:60,start:'2028-01-15',end:'2028-12-31',eq:['Helicopter','Line stringing rig','Bucket trucks'],src:'GA PSC 2025 IRP',county:'Dougherty / Mitchell, GA',geom:{k:'line',c:[[31.578,-84.156],[31.4,-84.19],[31.232,-84.208]]}},
+ {id:'GTC-3324',u:'GTC',name:'Camilla–Pelham 115kV Line',type:'New line',status:'Approved',kv:115,cost:36,crew:22,start:'2027-03-01',end:'2027-09-30',eq:['Bucket trucks','Line stringing rig','Directional drill'],src:'SERTP 2026 Regional Plan',county:'Mitchell, GA',geom:{k:'line',c:[[31.228,-84.205],[31.18,-84.18],[31.128,-84.153]]}},
+ {id:'APC-4441',u:'APC',name:'Eufaula 115kV Substation Rebuild',type:'Substation',status:'Permitting',kv:115,cost:29,crew:18,start:'2027-06-01',end:'2028-01-31',eq:['Transformer lowboy','80-ton crane'],src:'AL PSC · 2026 Capital Plan Filing',county:'Barbour, AL',geom:{k:'pt',c:[31.891,-85.146]}},
+ {id:'GP-1078',u:'GP',name:'Georgetown–Eufaula Chattahoochee River Crossing',type:'River crossing',status:'Planned',kv:115,cost:41,crew:26,start:'2027-09-01',end:'2028-04-30',eq:['Directional drill','80-ton crane','Helicopter'],src:'SERTP 2026 Regional Plan',county:'Quitman, GA / Barbour, AL',geom:{k:'line',c:[[31.884,-85.03],[31.887,-85.08],[31.89,-85.135]]}},
+ {id:'DEF-2240',u:'DEF',name:'Live Oak–Jasper 230kV Line',type:'New line',status:'Planned',kv:230,cost:88,crew:42,start:'2028-02-01',end:'2028-11-30',eq:['Line stringing rig','Bucket trucks','Helicopter'],src:'FL PSC Ten-Year Site Plan 2026',county:'Suwannee / Hamilton, FL',geom:{k:'line',c:[[30.294,-82.985],[30.41,-82.97],[30.515,-82.95]]}},
+ {id:'GP-1084',u:'GP',name:'Jasper–Valdosta 230kV Corridor',type:'Interstate tie',status:'Planned',kv:230,cost:141,crew:64,start:'2028-06-01',end:'2029-06-30',eq:['Helicopter','Line stringing rig','80-ton crane','Bucket trucks'],src:'FERC Form 715 · 2026',county:'Hamilton, FL / Lowndes, GA',geom:{k:'line',c:[[30.53,-82.955],[30.7,-83.1],[30.88,-83.275]]}},
+ {id:'FPL-5133',u:'FPL',name:'Panama City Coastal Undergrounding',type:'Undergrounding',status:'In construction',kv:69,cost:57,crew:40,start:'2026-06-01',end:'2027-12-31',eq:['Directional drill','Excavators','Bucket trucks'],src:'FL PSC Storm Protection Plan 2026',county:'Bay, FL',geom:{k:'line',c:[[30.159,-85.66],[30.18,-85.73],[30.2,-85.8]]}},
+ {id:'DEF-2248',u:'DEF',name:'Tallahassee East 230kV Substation',type:'Substation',status:'Approved',kv:230,cost:66,crew:30,start:'2027-02-01',end:'2027-11-30',eq:['Transformer lowboy','80-ton crane','Excavators'],src:'FL PSC Ten-Year Site Plan 2026',county:'Leon, FL',geom:{k:'pt',c:[30.462,-84.18]}},
+ {id:'APC-4456',u:'APC',name:'Dothan–Headland 115kV Line',type:'New line',status:'Planned',kv:115,cost:31,crew:20,start:'2028-03-01',end:'2028-10-31',eq:['Bucket trucks','Line stringing rig'],src:'AL PSC · 2026 Capital Plan Filing',county:'Houston / Henry, AL',geom:{k:'line',c:[[31.222,-85.39],[31.29,-85.36],[31.352,-85.341]]}},
+ {id:'GTC-3339',u:'GTC',name:'Blakely–Colquitt 115kV Line',type:'New line',status:'Approved',kv:115,cost:38,crew:24,start:'2027-11-01',end:'2028-07-31',eq:['Bucket trucks','Line stringing rig','Directional drill'],src:'SERTP 2026 Regional Plan',county:'Early / Miller, GA',geom:{k:'line',c:[[31.377,-84.934],[31.27,-84.83],[31.172,-84.733]]}},
+ {id:'APC-4468',u:'APC',name:'Abbeville–Blakely 230kV Interstate Tie',type:'Interstate tie',status:'Permitting',kv:230,cost:119,crew:52,start:'2028-01-01',end:'2029-02-28',eq:['Helicopter','Line stringing rig','80-ton crane','Bucket trucks'],src:'FERC Form 715 · 2026',county:'Henry, AL / Early, GA',geom:{k:'line',c:[[31.572,-85.25],[31.45,-85.08],[31.385,-84.95]]}},
+ {id:'FPL-5140',u:'FPL',name:'Blountstown 115kV Rebuild',type:'Line rebuild',status:'Approved',kv:115,cost:27,crew:20,start:'2027-04-01',end:'2027-12-31',eq:['Bucket trucks','Line stringing rig'],src:'FL PSC Ten-Year Site Plan 2026',county:'Calhoun, FL',geom:{k:'line',c:[[30.443,-85.047],[30.52,-85.07],[30.6,-85.1]]}},
+ {id:'DEF-2256',u:'DEF',name:'Monticello Solar Interconnect Substation',type:'Substation',status:'Approved',kv:115,cost:24,crew:14,start:'2027-05-01',end:'2027-11-30',eq:['Transformer lowboy','Excavators'],src:'EIA-860M · Queue #1184',county:'Jefferson, FL',geom:{k:'pt',c:[30.52,-83.9]}},
+ {id:'GP-1091',u:'GP',name:'Moultrie–Tifton 230kV Line',type:'New line',status:'Approved',kv:230,cost:94,crew:48,start:'2027-01-01',end:'2027-12-31',eq:['Helicopter','Line stringing rig','Bucket trucks'],src:'GA PSC 2025 IRP',county:'Colquitt / Tift, GA',geom:{k:'line',c:[[31.18,-83.79],[31.31,-83.65],[31.45,-83.51]]}},
+ {id:'GTC-3345',u:'GTC',name:'Moultrie 230kV Substation Expansion',type:'Substation',status:'Planned',kv:230,cost:42,crew:22,start:'2027-06-01',end:'2028-03-31',eq:['Transformer lowboy','80-ton crane','Excavators'],src:'SERTP 2026 Regional Plan',county:'Colquitt, GA',geom:{k:'pt',c:[31.172,-83.8]}},
+ {id:'DEF-2263',u:'DEF',name:'Perry–Madison 115kV Rebuild',type:'Line rebuild',status:'Planned',kv:115,cost:46,crew:28,start:'2028-04-01',end:'2028-12-31',eq:['Bucket trucks','Line stringing rig'],src:'FL PSC Ten-Year Site Plan 2026',county:'Taylor / Madison, FL',geom:{k:'line',c:[[30.118,-83.582],[30.3,-83.5],[30.466,-83.415]]}},
+ {id:'FPL-5147',u:'FPL',name:'Sneads–Chattahoochee 115kV Line',type:'New line',status:'Planned',kv:115,cost:34,crew:22,start:'2027-10-01',end:'2028-08-31',eq:['Bucket trucks','Line stringing rig','Directional drill'],src:'FL PSC Ten-Year Site Plan 2026',county:'Jackson / Gadsden, FL',geom:{k:'line',c:[[30.708,-84.925],[30.705,-84.87],[30.702,-84.83]]}},
+ {id:'GTC-3352',u:'GTC',name:'Lake Seminole 115kV Substation Rebuild',type:'Substation',status:'Permitting',kv:115,cost:26,crew:16,start:'2028-01-15',end:'2028-09-30',eq:['Transformer lowboy','80-ton crane'],src:'SERTP 2026 Regional Plan',county:'Seminole / Decatur, GA',geom:{k:'pt',c:[30.76,-84.84]}},
+ {id:'APC-4472',u:'APC',name:'Columbia 230kV Switching Station',type:'Substation',status:'Planned',kv:230,cost:37,crew:18,start:'2028-05-01',end:'2029-01-31',eq:['Transformer lowboy','80-ton crane','Excavators'],src:'AL PSC · 2026 Capital Plan Filing',county:'Houston, AL',geom:{k:'pt',c:[31.29,-85.11]}},
+ {id:'GP-1099',u:'GP',name:'Bainbridge 230kV Capacitor Bank',type:'Substation',status:'Approved',kv:230,cost:12,crew:10,start:'2027-02-15',end:'2027-07-31',eq:['Bucket trucks','Transformer lowboy'],src:'GA PSC 2025 IRP',county:'Decatur, GA',geom:{k:'pt',c:[30.9,-84.6]}}
+];
+
+const SOURCES = [
+  { k:'FERC', name:'FERC eLibrary', desc:'Order 1920 regional plans, Form 715 filings', rec:1284, cov:'Federal', sync:'12 min ago', st:'live' },
+  { k:'SE', name:'SERTP Regional Plan', desc:'Southeastern Regional Transmission Planning — 2026 project list', rec:342, cov:'SE region', sync:'12 min ago', st:'live' },
+  { k:'HI', name:'HIFLD Transmission Lines', desc:'DHS open GIS layer — existing corridors for route snapping', rec:94112, cov:'National', sync:'1 hr ago', st:'live' },
+  { k:'EIA', name:'EIA-860M', desc:'Monthly generator inventory & interconnection queue', rec:26031, cov:'National', sync:'2 hr ago', st:'live' },
+  { k:'FL', name:'Florida PSC', desc:'Ten-Year Site Plans & Storm Protection Plans', rec:211, cov:'Florida', sync:'38 min ago', st:'live' },
+  { k:'GA', name:'Georgia PSC', desc:'Integrated Resource Plan dockets & exhibits', rec:167, cov:'Georgia', sync:'38 min ago', st:'live' },
+  { k:'AL', name:'Alabama PSC', desc:'Capital plan filings & certificates of convenience', rec:94, cov:'Alabama', sync:'41 min ago', st:'live' },
+  { k:'AI', name:'Utility capital-plan PDFs', desc:'Investor decks & PDFs parsed with LLM extraction', rec:212, cov:'5 utilities', sync:'3 hr ago', st:'ai' }
+];
+
+// ---------- state ----------
+const S = {
+  projects: BASE.map(p => ({ ...p })),
+  D: 10, T: 90, sameUtil: false, mode: 'all',
+  utilOn: Object.fromEntries(Object.keys(UTIL).map(k => [k, true])),
+  conflicts: [], selected: null, tlSort: 'util', page: 'dash'
+};
+
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const DAY = 864e5;
+const D = s => Date.parse(s + 'T00:00:00Z');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const fmtD = s => new Date(D(s)).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+const fmtDD = s => new Date(D(s)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const fmtM = x => x >= 1 ? `$${x.toFixed(1)}M` : `$${Math.round(x * 1000)}K`;
+const fmtKm = d => d < 0.05 ? 'Crossing' : `${d.toFixed(1)} km`;
+const fmtMi = d => `${(d * 0.621371).toFixed(1)} mi`;
+const byId = id => S.projects.find(p => p.id === id);
+
+// ---------- geometry (local equirectangular, km) ----------
+const LAT0 = 31 * Math.PI / 180, KX = 111.32 * Math.cos(LAT0), KY = 110.574;
+const toXY = ([lat, lng]) => [lng * KX, lat * KY];
+const toLL = ([x, y]) => [y / KY, x / KX];
+function segs(g) {
+  const pts = (g.k === 'pt' ? [g.c, g.c] : g.c).map(toXY);
+  const s = [];
+  for (let i = 0; i < pts.length - 1; i++) s.push([pts[i], pts[i + 1]]);
+  return s;
+}
+function ptSeg(p, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+  let t = L ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L : 0;
+  t = Math.max(0, Math.min(1, t));
+  const q = [a[0] + t * dx, a[1] + t * dy];
+  return { d: Math.hypot(p[0] - q[0], p[1] - q[1]), q };
+}
+function intersect(a, b, c, d) {
+  const r = [b[0] - a[0], b[1] - a[1]], s = [d[0] - c[0], d[1] - c[1]];
+  const den = r[0] * s[1] - r[1] * s[0];
+  if (Math.abs(den) < 1e-12) return null;
+  const t = ((c[0] - a[0]) * s[1] - (c[1] - a[1]) * s[0]) / den;
+  const u = ((c[0] - a[0]) * r[1] - (c[1] - a[1]) * r[0]) / den;
+  return (t >= 0 && t <= 1 && u >= 0 && u <= 1) ? [a[0] + t * r[0], a[1] + t * r[1]] : null;
+}
+function geoDist(A, B) {
+  let best = { d: Infinity };
+  for (const [a, b] of segs(A.geom)) for (const [c, d] of segs(B.geom)) {
+    const x = intersect(a, b, c, d);
+    if (x) return { d: 0, pa: toLL(x), pb: toLL(x) };
+    for (const [p, s0, s1, fromA] of [[a, c, d, 1], [b, c, d, 1], [c, a, b, 0], [d, a, b, 0]]) {
+      const r = ptSeg(p, s0, s1);
+      if (r.d < best.d) best = fromA ? { d: r.d, pa: toLL(p), pb: toLL(r.q) } : { d: r.d, pa: toLL(r.q), pb: toLL(p) };
+    }
+  }
+  return best;
+}
+function routeKm(pts) {
+  let t = 0;
+  for (let i = 1; i < pts.length; i++) { const a = toXY(pts[i - 1]), b = toXY(pts[i]); t += Math.hypot(a[0] - b[0], a[1] - b[1]); }
+  return t;
+}
+
+// ---------- overlap detection ----------
+function pair(a, b, o) {
+  const g = geoDist(a, b);
+  const aS = D(a.start), aE = D(a.end), bS = D(b.start), bE = D(b.end);
+  const overlap = Math.max(0, Math.round((Math.min(aE, bE) - Math.max(aS, bS)) / DAY));
+  const gap = Math.max(0, Math.round((Math.max(aS, bS) - Math.min(aE, bE)) / DAY));
+  const R = o.D * 3;
+  const near = g.d <= o.D, soon = gap <= o.T;
+  let kind = null;
+  if (near && soon) kind = 'both';
+  else if (near) kind = 'space';
+  else if (overlap > 0 && g.d <= R) kind = 'time';
+  if (!kind) return null;
+  const sT = overlap > 0 ? Math.min(1, 0.5 + overlap / 400) : 0.5 * Math.max(0, 1 - gap / Math.max(o.T, 1));
+  let score;
+  if (kind === 'both') score = 50 + 50 * (0.6 * Math.max(0, 1 - g.d / o.D) + 0.4 * sT);
+  else if (kind === 'space') score = 30 + 30 * Math.max(0, 1 - g.d / o.D);
+  else score = 20 + 30 * (0.5 * Math.max(0, 1 - g.d / R) + 0.5 * sT);
+  score = Math.round(Math.min(99, score));
+  const sev = score >= 85 ? 'critical' : score >= 65 ? 'high' : score >= 45 ? 'moderate' : 'low';
+  const shared = a.eq.filter(e => b.eq.includes(e));
+  const f = kind === 'both' ? 0.085 : kind === 'space' ? 0.04 : 0.025;
+  const savings = Math.min(a.cost, b.cost) * f * (score / 100) + shared.length * 0.11;
+  const win = overlap > 0 ? [Math.max(aS, bS), Math.min(aE, bE)] : [Math.min(aE, bE), Math.max(aS, bS)];
+  return { id: a.id + '|' + b.id, a, b, d: g.d, pa: g.pa, pb: g.pb, overlap, gap, kind, score, sev, shared, savings, win,
+           crossState: UTIL[a.u].state !== UTIL[b.u].state };
+}
+function detect(list, o) {
+  const out = [];
+  for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+    const a = list[i], b = list[j];
+    if (!o.sameUtil && a.u === b.u) continue;
+    const c = pair(a, b, o);
+    if (c) out.push(c);
+  }
+  return out.sort((x, y) => y.score - x.score);
+}
+const activeProjects = () => S.projects.filter(p => S.utilOn[p.u]);
+const visibleConflicts = () => S.conflicts.filter(c => S.mode === 'all' || c.kind === S.mode);
+const conflictsOf = id => S.conflicts.filter(c => c.a.id === id || c.b.id === id);
+
+function recompute() {
+  S.conflicts = detect(activeProjects(), S);
+  if (S.selected && !S.conflicts.find(c => c.id === S.selected)) closeDrawer();
+  $('#navConf').textContent = visibleConflicts().length;
+  $('#navProj').textContent = S.projects.length;
+  renderDash(); renderConfList(); renderMainLayers(); renderTimeline(); renderTable();
+}
+
+// ---------- routing ----------
+const TITLES = { dash: 'Command Center', map: 'Overlap Map', timeline: 'Timeline', plan: 'Plan & Check', projects: 'Project Registry', sources: 'Public Data Sources' };
+function go(page) {
+  if (!TITLES[page]) page = 'dash';
+  S.page = page;
+  $$('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + page));
+  $$('.nav a').forEach(a => a.classList.toggle('on', a.dataset.go === page));
+  $('#crumbT').textContent = TITLES[page];
+  if (location.hash !== '#' + page) history.replaceState(null, '', '#' + page);
+  if (page === 'map') { initMainMap(); setTimeout(() => mapM && mapM.invalidateSize(), 30); }
+  if (page === 'plan') { initPlanMap(); setTimeout(() => mapP && mapP.invalidateSize(), 30); }
+}
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]');
+  if (g) { e.preventDefault(); go(g.dataset.go); }
+});
+
+// ---------- small components ----------
+function ring(score, sev, size = 44) {
+  const r = size / 2 - 4, c = 2 * Math.PI * r;
+  return `<div class="ring" style="width:${size}px;height:${size}px"><svg width="${size}" height="${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#EFEDE6" stroke-width="4"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${SEV_C[sev]}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c * score / 100} ${c}"/></svg>${score}</div>`;
+}
+const uTag = u => `<span class="tag"><span class="dot" style="background:${UTIL[u].color}"></span>${UTIL[u].short}</span>`;
+function timeText(c) { return c.overlap > 0 ? `${c.overlap} days concurrent` : `${c.gap} days apart`; }
+function confItem(c, sel) {
+  return `<div class="ci ${sel ? 'sel' : ''}" data-conf="${c.id}">
+    ${ring(c.score, c.sev)}
+    <div><div class="t">${esc(c.a.name)}<em>⇄</em>${esc(c.b.name)}</div>
+      <div class="m"><span class="sev ${c.sev}">${c.sev}</span><span class="kind">${KIND_L[c.kind]}</span>·<span>${fmtKm(c.d)}</span>·<span>${timeText(c)}</span></div></div>
+    <div class="s"><b>${fmtM(c.savings)}</b>est. savings</div></div>`;
+}
+
+// ---------- dashboard ----------
+function renderDash() {
+  const cs = S.conflicts, vis = cs;
+  const crit = vis.filter(c => c.sev === 'critical').length, high = vis.filter(c => c.sev === 'high').length;
+  const save = vis.reduce((t, c) => t + c.savings, 0);
+  const inv = new Set(); vis.forEach(c => { inv.add(c.a.id); inv.add(c.b.id); });
+  const capital = [...inv].reduce((t, id) => t + (byId(id)?.cost || 0), 0);
+  const cross = vis.filter(c => c.crossState).length;
+  $('#heroCount').textContent = `${vis.length} overlaps`;
+  $('#heroSave').textContent = fmtM(save);
+  $('#kpis').innerHTML = `
+    <div class="card kpi"><div class="ic">${I('layers')}</div><div class="v num">${S.projects.length}</div><div class="l">Planned projects monitored</div><div class="d">+3 this week</div></div>
+    <div class="card kpi dark"><div class="ic">${I('alert')}</div><div class="v num">${vis.length}</div><div class="l">Active overlaps · ${crit} critical · ${high} high</div><div class="d">${cross} cross-state</div></div>
+    <div class="card kpi"><div class="ic">${I('dollar')}</div><div class="v num">$${Math.round(capital).toLocaleString()}M</div><div class="l">Capital inside overlap zones</div><div class="d">${inv.size} projects</div></div>
+    <div class="card kpi"><div class="ic">${I('users')}</div><div class="v num">${fmtM(save)}</div><div class="l">Est. savings from coordinating</div><div class="d">shared crews + equipment</div></div>`;
+  // quarters chart
+  const qs = []; let y = 2026, q = 4;
+  while (y < 2029 || (y === 2029 && q <= 2)) { qs.push({ l: `Q${q} ’${String(y).slice(2)}`, s: Date.UTC(y, (q - 1) * 3, 1), e: Date.UTC(y, q * 3, 1) }); if (++q > 4) { q = 1; y++; } }
+  const order = ['critical', 'high', 'moderate', 'low'];
+  const data = qs.map(Q => { const r = { critical: 0, high: 0, moderate: 0, low: 0 }; vis.forEach(c => { if (c.win[0] < Q.e && c.win[1] >= Q.s) r[c.sev]++; }); return r; });
+  const max = Math.max(4, ...data.map(r => order.reduce((t, k) => t + r[k], 0)));
+  const W = 640, H = 230, pl = 28, pb = 26, bw = (W - pl) / qs.length;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none">`;
+  for (let i = 0; i <= 4; i++) { const yy = 8 + (H - pb - 8) * (1 - i / 4); svg += `<line x1="${pl}" x2="${W}" y1="${yy}" y2="${yy}" stroke="#EFEDE6"/><text x="0" y="${yy + 4}">${Math.round(max * i / 4)}</text>`; }
+  const nowX = pl + ((Date.UTC(2026, 8, 27) - qs[0].s) / (qs[qs.length - 1].e - qs[0].s)) * (W - pl);
+  data.forEach((r, i) => {
+    let yy = H - pb; const x = pl + i * bw + bw * 0.2, w = bw * 0.6;
+    order.forEach(k => { if (!r[k]) return; const h = (H - pb - 8) * r[k] / max; yy -= h; svg += `<rect x="${x}" y="${yy}" width="${w}" height="${h}" rx="3" fill="${k === 'low' ? '#D6D3C9' : SEV_C[k]}"><title>${qs[i].l}: ${r[k]} ${k}</title></rect>`; });
+    svg += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle">${qs[i].l}</text>`;
+  });
+  svg += `<line x1="${nowX}" x2="${nowX}" y1="4" y2="${H - pb}" stroke="#0A0A0A" stroke-dasharray="3 3"/><rect x="${nowX - 18}" y="0" width="36" height="14" rx="4" fill="#0A0A0A"/><text x="${nowX}" y="10" text-anchor="middle" style="fill:#FFD400;font-size:9px;font-weight:700">NOW</text></svg>`;
+  $('#chartQ').innerHTML = svg;
+  // border chart
+  const groups = {};
+  vis.forEach(c => { const a = UTIL[c.a.u].state, b = UTIL[c.b.u].state; const k = a === b ? `Within ${a}` : [a, b].sort().join(' ↔ '); groups[k] = (groups[k] || 0) + 1; });
+  const ents = Object.entries(groups).sort((a, b) => b[1] - a[1]);
+  const gm = Math.max(1, ...ents.map(e => e[1]));
+  $('#chartB').innerHTML = ents.length ? ents.map(([k, v], i) => `<div class="row"><span>${k}</span><div class="track"><div class="fill ${i === 0 ? 'y' : ''}" style="width:${v / gm * 100}%"></div></div><span class="n">${v}</span></div>`).join('') : '<div style="color:var(--mut)">No overlaps with current thresholds.</div>';
+  const both = vis.filter(c => c.kind === 'both').length, sp = vis.filter(c => c.kind === 'space').length, tm = vis.filter(c => c.kind === 'time').length;
+  $('#splitK').innerHTML = `<div><b>${both}</b><span>Space + time</span></div><div><b>${sp}</b><span>Proximity only</span></div><div><b>${tm}</b><span>Schedule only</span></div>`;
+  $('#topList').innerHTML = vis.slice(0, 5).map(c => confItem(c)).join('') || '<div class="clean">No overlaps.</div>';
+}
+const FEED = [
+  ['r', '<b>New critical overlap</b> — GTC Bainbridge–Attapulgus ⇄ Duke Havana–Attapulgus tie, 1.2 km apart', '4 min ago'],
+  ['y', '<b>FL PSC</b> published Duke Energy Florida 2026 Ten-Year Site Plan · 14 projects extracted', '38 min ago'],
+  ['g', '<b>Georgia Power</b> accepted coordination request on Quitman substation', '2 hr ago'],
+  ['y', '<b>SERTP</b> 2026 regional plan updated · 6 in-service dates moved', '5 hr ago'],
+  ['g', '<b>Keystone Grid</b> registered “Blountstown Access Road Upgrade”', 'Yesterday']
+];
+function renderFeed() { $('#feed').innerHTML = FEED.map(f => `<div class="fi"><i class="${f[0]}"></i><div>${f[1]}<small>${f[2]}</small></div></div>`).join(''); }
+
+// ---------- main map ----------
+let mapM = null, LProj = null, LConf = null, projLayers = {};
+function baseTiles(m) {
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors', maxZoom: 16 }).addTo(m);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, pane: 'overlayPane', opacity: .9 }).addTo(m);
+}
+function initMainMap() {
+  if (mapM) return;
+  if (!window.L) { $('#mapMain').innerHTML = '<div class="nomap">Map tiles need an internet connection.<br>Everything else in the demo works offline.</div>'; return; }
+  mapM = L.map('mapMain', { zoomControl: false, preferCanvas: false }).setView([30.95, -84.45], 8);
+  L.control.zoom({ position: 'bottomright' }).addTo(mapM);
+  baseTiles(mapM);
+  LProj = L.layerGroup().addTo(mapM);
+  LConf = L.layerGroup().addTo(mapM);
+  mapM.on('click', () => { if (S.selected) closeDrawer(); });
+  renderMainLayers();
+}
+function projTooltip(p) { return `${esc(p.name)}<small>${UTIL[p.u].short} · ${fmtD(p.start)} – ${fmtD(p.end)}</small>`; }
+function drawProject(layer, p, opts = {}) {
+  const col = UTIL[p.u].color, op = opts.faded ? 0.35 : 1;
+  let lyr;
+  if (p.geom.k === 'line') {
+    const casing = L.polyline(p.geom.c, { color: '#fff', weight: (opts.w || 5) + 4, opacity: op, interactive: false });
+    const line = L.polyline(p.geom.c, { color: col, weight: opts.w || 5, opacity: op, lineCap: 'round', dashArray: p.isNew ? '10 8' : null });
+    lyr = L.featureGroup([casing, line]);
+    lyr.main = line;
+  } else {
+    lyr = L.circleMarker(p.geom.c, { radius: opts.r || 8, color: '#fff', weight: 3, fillColor: col, fillOpacity: op, opacity: op });
+    lyr.main = lyr;
+  }
+  lyr.bindTooltip(projTooltip(p), { className: 'gl-tip', direction: 'top', sticky: true });
+  if (!opts.noclick) lyr.on('click', e => { L.DomEvent.stopPropagation(e); openProject(p.id); });
+  lyr.addTo(layer);
+  return lyr;
+}
+function confPin(c, big) {
+  const mid = [(c.pa[0] + c.pb[0]) / 2, (c.pa[1] + c.pb[1]) / 2];
+  return L.marker(mid, { icon: L.divIcon({ className: '', html: `<div class="cf-pin ${big ? 'big' : ''}" style="--c:${SEV_C[c.sev]}"><span></span></div>`, iconSize: [30, 30], iconAnchor: [15, 15] }), zIndexOffset: 1000 });
+}
+function renderMainLayers() {
+  if (!mapM) return;
+  LProj.clearLayers(); LConf.clearLayers(); projLayers = {};
+  const sel = S.conflicts.find(c => c.id === S.selected);
+  activeProjects().forEach(p => {
+    const hi = sel && (sel.a.id === p.id || sel.b.id === p.id);
+    projLayers[p.id] = drawProject(LProj, p, { faded: sel && !hi, w: hi ? 8 : 5, r: hi ? 11 : 8 });
+  });
+  visibleConflicts().forEach(c => {
+    const on = sel && sel.id === c.id;
+    if (sel && !on) return;
+    if (c.d > 0.05) L.polyline([c.pa, c.pb], { color: SEV_C[c.sev], weight: 2, dashArray: '4 6', opacity: .9, interactive: false }).addTo(LConf);
+    const m = confPin(c, on).addTo(LConf);
+    m.bindTooltip(`${KIND_L[c.kind]} overlap · score ${c.score}<small>${fmtKm(c.d)} · ${timeText(c)}</small>`, { className: 'gl-tip', direction: 'top', offset: [0, -10] });
+    m.on('click', e => { L.DomEvent.stopPropagation(e); selectConflict(c.id); });
+  });
+  const vis = visibleConflicts();
+  $('#mapStats').innerHTML = `<div><b>${activeProjects().length}</b>projects</div><div><b>${vis.filter(c => c.sev === 'critical').length}</b>critical</div><div class="y"><b>${fmtM(vis.reduce((t, c) => t + c.savings, 0))}</b>savings on the table</div>`;
+}
+function renderLegend(el) {
+  el.innerHTML = `<b>Utilities</b>${Object.values(UTIL).map(u => `<div><span class="ln" style="background:${u.color}"></span>${u.name} <span style="color:var(--mut2);margin-left:auto">${u.state}</span></div>`).join('')}<div style="margin-top:4px"><span class="pn"></span>Flagged overlap</div>`;
+}
+function renderConfList() {
+  const vis = visibleConflicts();
+  $('#confCount').textContent = vis.length;
+  $('#confList').innerHTML = vis.length ? vis.map(c => confItem(c, c.id === S.selected)).join('') :
+    `<div class="clean" style="margin:10px"><div class="big">${I('check', 24)}</div><b>No overlaps at these thresholds</b><br><span style="font-size:12.5px">Widen the radius or schedule window to surface more.</span></div>`;
+}
+function renderUtilToggles() {
+  $('#utilToggles').innerHTML = Object.entries(UTIL).map(([k, u]) => `<button class="ut ${S.utilOn[k] ? '' : 'off'}" data-ut="${k}"><i style="background:${u.color}"></i>${u.short}</button>`).join('');
+}
+function selectConflict(id) {
+  if (S.page !== 'map') go('map');
+  S.selected = id;
+  const c = S.conflicts.find(x => x.id === id);
+  if (!c) return;
+  renderConfList(); renderMainLayers(); renderDrawer(c);
+  $('#drawer').classList.add('on');
+  if (mapM) {
+    const b = L.latLngBounds([].concat(c.a.geom.k === 'pt' ? [c.a.geom.c] : c.a.geom.c, c.b.geom.k === 'pt' ? [c.b.geom.c] : c.b.geom.c));
+    mapM.flyToBounds(b, { paddingTopLeft: [60, 60], paddingBottomRight: [480, 60], maxZoom: 11, duration: .8 });
+  }
+  const el = document.querySelector(`#confList [data-conf="${CSS.escape(id)}"]`);
+  el && el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+function closeDrawer() {
+  S.selected = null;
+  $('#drawer').classList.remove('on');
+  renderConfList(); renderMainLayers();
+}
+function recommend(c) {
+  const A = UTIL[c.a.u].short, B = UTIL[c.b.u].short;
+  const sh = c.shared.length ? `share ${c.shared.slice(0, 2).join(' and ').toLowerCase()}` : 'share laydown yards and access roads';
+  if (c.kind === 'both') return `${A} and ${B} crews will be within ${c.d < 0.05 ? 'the same span' : fmtKm(c.d)} of each other ${c.overlap > 0 ? `for ${c.overlap} days` : `${c.gap} days apart`}. Propose a joint mobilization: ${sh}, align outage windows, and file one combined ROW / traffic-control permit with the county.`;
+  if (c.kind === 'space') return `Same corridor, different seasons (${c.gap} days apart). ${A} can leave access roads, matting and laydown yards in place for ${B}, avoiding a second round of site prep and landowner outreach.`;
+  return `Both projects draw from the same regional labor pool at the same time (${c.overlap} days concurrent, ${fmtKm(c.d)} apart). Stagger peak crew weeks or book a shared lineman contract so the utilities aren't bidding against each other.`;
+}
+function miniTL(c) {
+  const aS = D(c.a.start), aE = D(c.a.end), bS = D(c.b.start), bE = D(c.b.end);
+  const s = Math.min(aS, bS), e = Math.max(aE, bE), f = t => ((t - s) / (e - s) * 100);
+  const bar = (p, S0, E0, top) => `<div class="bar" style="top:${top}px;left:calc(12px + (100% - 24px) * ${f(S0) / 100});width:calc((100% - 24px) * ${(f(E0) - f(S0)) / 100});background:${UTIL[p.u].color};color:${UTIL[p.u].ink}">${UTIL[p.u].short}</div>`;
+  let ov = '';
+  if (c.overlap > 0) ov = `<div class="ov" style="left:calc(12px + (100% - 24px) * ${f(Math.max(aS, bS)) / 100});width:calc((100% - 24px) * ${(f(Math.min(aE, bE)) - f(Math.max(aS, bS))) / 100})"></div>`;
+  return `<div class="mtl">${ov}${bar(c.a, aS, aE, 12)}${bar(c.b, bS, bE, 42)}</div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:6px"><span>${fmtD(new Date(s).toISOString().slice(0, 10))}</span><span>${c.overlap > 0 ? `<b style="color:var(--crit)">${c.overlap} days concurrent</b>` : `${c.gap}-day gap`}</span><span>${fmtD(new Date(e).toISOString().slice(0, 10))}</span></div>`;
+}
+function pcard(p) {
+  return `<div class="pcard" style="--c:${UTIL[p.u].color}" data-proj="${p.id}"><div class="u">${UTIL[p.u].short} · ${UTIL[p.u].state}</div><div class="n">${esc(p.name)}</div>
+    <div class="f"><span>${fmtD(p.start)} → ${fmtD(p.end)}</span><span>${p.kv} kV · ${fmtM(p.cost)} · ${p.crew} crew</span><span>${p.status}</span></div></div>`;
+}
+function renderDrawer(c) {
+  $('#drawer').innerHTML = `
+    <div class="dr-h"><button class="icon-btn x" id="drClose">${I('x')}</button>
+      <div style="display:flex;gap:8px;align-items:center"><span class="sev ${c.sev}">${c.sev}</span><span class="tag">${KIND_L[c.kind]} overlap</span>${c.crossState ? `<span class="tag">${UTIL[c.a.u].state} ↔ ${UTIL[c.b.u].state}</span>` : ''}</div>
+      <h3>${esc(c.a.name)} ⇄ ${esc(c.b.name)}</h3></div>
+    <div class="dr-b">
+      <div class="metrics"><div class="k"><span>Score</span><b>${c.score}</b></div><div><span>Distance</span><b>${fmtKm(c.d)}</b></div><div><span>${c.overlap > 0 ? 'Concurrent' : 'Gap'}</span><b>${c.overlap > 0 ? c.overlap : c.gap}d</b></div><div><span>Savings</span><b>${fmtM(c.savings)}</b></div></div>
+      <div><div class="sec-t">The two projects</div><div class="pc">${pcard(c.a)}${pcard(c.b)}</div></div>
+      <div><div class="sec-t">Schedule</div>${miniTL(c)}</div>
+      <div><div class="sec-t">Shared resource opportunities</div><div class="chips">${c.shared.length ? c.shared.map(e => `<span class="tag">${e}</span>`).join('') : '<span class="tag">Laydown yards</span><span class="tag">Access roads</span>'}<span class="tag">Outage window</span><span class="tag">County permits</span></div></div>
+      <div class="reco"><div class="h"><span>AI</span>Suggested coordination plan</div>${recommend(c)}</div>
+      <div style="font-size:11.5px;color:var(--mut)">Sources: ${esc(c.a.src)} · ${esc(c.b.src)}</div>
+    </div>
+    <div class="dr-f"><button class="btn y" style="flex:1" id="drReq">${I('send', 16)}Request coordination</button><button class="btn ghost" id="drBrief">${I('file', 16)}Brief</button></div>`;
+  $('#drClose').onclick = closeDrawer;
+  $('#drReq').onclick = () => openCoord(c);
+  $('#drBrief').onclick = () => downloadBrief(c);
+}
+
+// ---------- coordination modal ----------
+function openCoord(c, fromName) {
+  const other = c.b, me = c.a;
+  const to = UTIL[other.u];
+  const body = `Hi ${to.short} planning team,\n\nGridLock Finder flagged a ${KIND_L[c.kind].toLowerCase()} overlap between "${me.name}" and your "${other.name}" (${fmtKm(c.d)} apart, ${timeText(c)}).\n\nWe'd like to explore sharing ${c.shared.length ? c.shared.join(', ').toLowerCase() : 'access roads and laydown yards'} and aligning outage windows. Estimated combined savings: ${fmtM(c.savings)}.\n\nCould we set up a 30-minute coordination call next week?\n\n— ${fromName || $('#role').value + ' team'}`;
+  openModal(`<div class="m-h"><div><div class="eyebrow">Coordination request</div><h3 style="margin-top:4px">Reach out to ${to.name}</h3></div><button class="icon-btn" data-close>${I('x')}</button></div>
+    <div class="m-b">
+      <div class="fld"><label>To</label><input value="${to.contact}"></div>
+      <div class="fld"><label>Subject</label><input value="GridLock overlap: ${esc(me.name)} ⇄ ${esc(other.name)}"></div>
+      <div class="fld"><label>Message</label><textarea rows="9">${esc(body)}</textarea></div>
+      <label class="tog" style="margin:4px 0 16px"><input type="checkbox" checked><span class="sw"></span>Attach GridLock overlap brief (PDF) and shared map link</label>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn ghost" data-close>Cancel</button><button class="btn y" id="sendReq">${I('send', 16)}Send request</button></div>
+    </div>`);
+  $('#sendReq').onclick = () => { closeModal(); toast(`Coordination request sent to ${to.name}`); FEED.unshift(['g', `<b>Request sent</b> to ${to.name} re: ${esc(other.name)}`, 'Just now']); renderFeed(); };
+}
+function downloadBrief(c) {
+  const txt = `GRIDLOCK FINDER — OVERLAP BRIEF (DEMO DATA)\n==========================================\n\n${c.a.name} (${UTIL[c.a.u].name})\n  ${c.a.start} → ${c.a.end} · ${c.a.kv} kV · $${c.a.cost}M · source: ${c.a.src}\n\n${c.b.name} (${UTIL[c.b.u].name})\n  ${c.b.start} → ${c.b.end} · ${c.b.kv} kV · $${c.b.cost}M · source: ${c.b.src}\n\nOverlap type: ${KIND_L[c.kind]}\nSeverity: ${c.sev.toUpperCase()} (score ${c.score}/100)\nDistance: ${fmtKm(c.d)} (${fmtMi(c.d)})\nSchedule: ${timeText(c)}\nShared equipment: ${c.shared.join(', ') || '—'}\nEstimated savings: ${fmtM(c.savings)}\n\nRecommendation:\n${recommend(c)}\n`;
+  dl(`gridlock-brief-${c.a.id}-${c.b.id}.txt`, txt, 'text/plain');
+  toast('Overlap brief downloaded');
+}
+function dl(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function exportCSV() {
+  const rows = [['score', 'severity', 'type', 'project_a', 'utility_a', 'project_b', 'utility_b', 'distance_km', 'concurrent_days', 'gap_days', 'shared_equipment', 'est_savings_musd']];
+  visibleConflicts().forEach(c => rows.push([c.score, c.sev, KIND_L[c.kind], c.a.name, UTIL[c.a.u].name, c.b.name, UTIL[c.b.u].name, c.d.toFixed(2), c.overlap, c.gap, c.shared.join('; '), c.savings.toFixed(2)]));
+  dl('gridlock-overlaps.csv', rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n'), 'text/csv');
+  toast(`Exported ${rows.length - 1} overlaps to CSV`);
+}
+
+// ---------- timeline ----------
+const T0 = Date.UTC(2026, 6, 1), T1 = Date.UTC(2029, 9, 1);
+const pct = t => Math.max(0, Math.min(100, (t - T0) / (T1 - T0) * 100));
+function renderTimeline() {
+  const hot = new Set(); const risk = {};
+  S.conflicts.forEach(c => { if (c.kind !== 'space') { hot.add(c.a.id); hot.add(c.b.id); } risk[c.a.id] = Math.max(risk[c.a.id] || 0, c.score); risk[c.b.id] = Math.max(risk[c.b.id] || 0, c.score); });
+  let head = '<div class="tl-h nm">Project</div><div class="tl-h" style="position:sticky;top:0">';
+  let y = 2026, q = 3, bg = '';
+  while (Date.UTC(y, (q - 1) * 3, 1) < T1) {
+    const t = Date.UTC(y, (q - 1) * 3, 1), l = pct(t);
+    head += `<div class="tl-q ${q === 1 ? 'yr' : ''}" style="left:${l}%">${q === 1 || (y === 2026 && q === 3) ? `<span class="yl">${y}</span>` : ''}Q${q}</div>`;
+    bg += `<i style="left:${l}%;${q === 1 ? 'border-color:#dcd9cf' : ''}"></i>`;
+    if (++q > 4) { q = 1; y++; }
+  }
+  head += '</div>';
+  const today = `<div class="tl-today" style="left:${pct(Date.UTC(2026, 8, 27))}%"></div>`;
+  const list = activeProjects().slice();
+  const row = p => {
+    const l = pct(D(p.start)), w = pct(D(p.end)) - l;
+    const ovs = S.conflicts.filter(c => c.overlap > 0 && c.kind !== 'space' && (c.a.id === p.id || c.b.id === p.id))
+      .map(c => `<div class="tl-ov" style="left:${pct(c.win[0])}%;width:${pct(c.win[1]) - pct(c.win[0])}%"></div>`).join('');
+    return `<div class="tl-name" data-proj="${p.id}"><b>${esc(p.name)}${p.isNew ? '<span class="newb">NEW</span>' : ''}</b><span>${p.id} · ${p.kv} kV · ${p.type}</span></div>
+      <div class="tl-track"><div class="tl-bg">${bg}</div>${ovs}<div class="tl-bar ${hot.has(p.id) ? 'hot' : ''} ${p.isNew ? 'new' : ''}" data-proj="${p.id}" data-tl="${p.id}" style="left:${l}%;width:${w}%;background:${UTIL[p.u].color};color:${UTIL[p.u].ink}">${hot.has(p.id) ? I('alert', 12) : ''}${fmtD(p.start)} – ${fmtD(p.end)}</div></div>`;
+  };
+  let body = '';
+  if (S.tlSort === 'util') {
+    Object.keys(UTIL).forEach(k => {
+      const ps = list.filter(p => p.u === k).sort((a, b) => D(a.start) - D(b.start));
+      if (!ps.length) return;
+      body += `<div class="tl-grp"><i style="background:${UTIL[k].color}"></i>${UTIL[k].name}<span>· ${UTIL[k].state} · ${ps.length} projects</span></div>` + ps.map(row).join('');
+    });
+  } else {
+    list.sort(S.tlSort === 'start' ? (a, b) => D(a.start) - D(b.start) : (a, b) => (risk[b.id] || 0) - (risk[a.id] || 0));
+    body = list.map(row).join('');
+  }
+  $('#tl').innerHTML = `<div class="tl-grid" style="position:relative">${head}${body}</div>`;
+  // today line spanning tracks
+  const grid = $('#tl .tl-grid');
+  const tline = document.createElement('div');
+  tline.style.cssText = 'position:absolute;left:300px;right:0;top:0;bottom:0;pointer-events:none';
+  tline.innerHTML = today;
+  grid.appendChild(tline);
+}
+// tooltip for timeline bars
+document.addEventListener('mousemove', e => {
+  const b = e.target.closest('[data-tl]'), tip = $('#tip');
+  if (!b) { tip.classList.remove('on'); return; }
+  const p = byId(b.dataset.tl); if (!p) return;
+  const n = conflictsOf(p.id).length;
+  tip.innerHTML = `<div style="font-weight:600">${esc(p.name)}</div><small>${UTIL[p.u].name} · ${p.status}</small><div style="margin-top:6px">${fmtDD(p.start)} → ${fmtDD(p.end)}</div><div>${n ? `<b>${n} overlap${n > 1 ? 's' : ''}</b> flagged` : 'No overlaps'}</div>`;
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - 310) + 'px';
+  tip.style.top = (e.clientY + 14) + 'px';
+  tip.classList.add('on');
+});
+
+// ---------- project table ----------
+function renderTable() {
+  const q = ($('#tSearch').value || '').toLowerCase(), u = $('#tUtil').value, st = $('#tStatus').value, only = $('#tOnly').checked;
+  const rows = S.projects.filter(p => (!q || (p.name + ' ' + p.id + ' ' + p.src + ' ' + p.county + ' ' + UTIL[p.u].name).toLowerCase().includes(q)) && (!u || p.u === u) && (!st || p.status === st) && (!only || conflictsOf(p.id).length));
+  $('#tCount').textContent = `${rows.length} of ${S.projects.length} projects`;
+  $('#tBody').innerHTML = rows.map(p => {
+    const n = conflictsOf(p.id).length;
+    return `<tr data-proj="${p.id}"><td><div class="pn">${esc(p.name)}${p.isNew ? '<span class="newb">NEW</span>' : ''}</div><div class="pid">${p.id} · ${esc(p.county)}</div></td>
+      <td>${uTag(p.u)}</td><td>${p.type}</td><td class="num">${p.kv}</td><td class="num" style="white-space:nowrap">${fmtD(p.start)} – ${fmtD(p.end)}</td>
+      <td><span class="st"><i style="background:${STATUS_C[p.status] || '#999'}"></i>${p.status}</span></td><td class="num" style="text-align:right">${fmtM(p.cost)}</td>
+      <td style="text-align:center"><span class="ovb ${n ? 'p' : 'z'}">${n}</span></td><td style="color:var(--mut);font-size:12px">${esc(p.src)}</td></tr>`;
+  }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--mut);padding:40px">No projects match.</td></tr>';
+}
+
+// ---------- project sheet ----------
+function openProject(id) {
+  const p = byId(id); if (!p) return;
+  const cs = conflictsOf(id);
+  const len = p.geom.k === 'line' ? `${routeKm(p.geom.c).toFixed(1)} km route` : 'Single site';
+  $('#sheet').innerHTML = `
+    <div class="sh-h"><button class="icon-btn x" id="shClose">${I('x')}</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${uTag(p.u)}<span class="tag">${p.id}</span><span class="st tag"><i style="background:${STATUS_C[p.status]}"></i>${p.status}</span></div>
+      <h2>${esc(p.name)}</h2><div style="color:var(--mut);font-size:13px">${p.type} · ${esc(p.county)} · ${len}</div></div>
+    <div class="sh-b">
+      <div class="facts"><div><span>Voltage</span><b>${p.kv} kV</b></div><div><span>Est. cost</span><b>${fmtM(p.cost)}</b></div><div><span>Peak crew</span><b>${p.crew}</b></div>
+        <div><span>Mobilize</span><b>${fmtD(p.start)}</b></div><div><span>Complete</span><b>${fmtD(p.end)}</b></div><div><span>Duration</span><b>${Math.round((D(p.end) - D(p.start)) / DAY / 30.4)} mo</b></div></div>
+      <div><div class="sec-t">Equipment</div><div class="chips">${p.eq.map(e => `<span class="tag">${e}</span>`).join('')}</div></div>
+      <div><div class="sec-t">Overlaps (${cs.length})</div>${cs.length ? `<div class="clist">${cs.map(c => confItem(c)).join('')}</div>` : `<div class="clean"><div class="big">${I('check', 24)}</div>No overlaps at current thresholds.</div>`}</div>
+      <div><div class="sec-t">Provenance</div><div class="cite"><div class="src-ic">${p.isNew ? 'KG' : esc(p.src.split(' ')[0].slice(0, 4))}</div><div style="flex:1"><b>${esc(p.src)}</b><div style="color:var(--mut);font-size:11.5px">${p.isNew ? 'Registered directly in GridLock' : 'Extracted automatically · confidence 0.94 · page 37'}</div></div>${I('ext', 16)}</div></div>
+    </div>`;
+  $('#shClose').onclick = closeSheet;
+  $('#sheet').classList.add('on'); $('#sheetScrim').classList.add('on');
+}
+function closeSheet() { $('#sheet').classList.remove('on'); $('#sheetScrim').classList.remove('on'); }
+$('#sheetScrim').onclick = closeSheet;
+document.addEventListener('click', e => {
+  const cf = e.target.closest('[data-conf]');
+  if (cf) { closeSheet(); if (!e.target.closest('#plResults')) selectConflict(cf.dataset.conf); return; }
+  const pr = e.target.closest('[data-proj]');
+  if (pr && !e.target.closest('#sheet')) openProject(pr.dataset.proj);
+});
+
+// ---------- modal & toast ----------
+function openModal(html, dark) { const m = $('#modal'); m.className = 'modal' + (dark ? ' dark' : ''); m.innerHTML = html; $('#scrim').classList.add('on'); }
+function closeModal() { $('#scrim').classList.remove('on'); }
+$('#scrim').addEventListener('click', e => { if (e.target.id === 'scrim' || e.target.closest('[data-close]')) closeModal(); });
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = `<i>${I('check', 15)}</i>${esc(msg)}`;
+  $('#toasts').appendChild(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, 3200);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeSheet(); if (S.selected) closeDrawer(); }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#gsearch').focus(); }
+});
+
+// ---------- plan & check ----------
+let mapP = null, PLctx = null, PLdraft = null, PLres = null;
+const PL = { mode: 'line', pts: [], result: null };
+const SAMPLE = [[30.877, -84.21], [30.78, -84.33], [30.66, -84.4], [30.628, -84.418]];
+function initPlanMap() {
+  if (mapP) return;
+  if (!window.L) { $('#mapPlan').innerHTML = '<div class="nomap">Map tiles need an internet connection.</div>'; return; }
+  mapP = L.map('mapPlan', { zoomControl: false }).setView([30.8, -84.35], 9);
+  L.control.zoom({ position: 'bottomright' }).addTo(mapP);
+  baseTiles(mapP);
+  PLctx = L.layerGroup().addTo(mapP); PLres = L.layerGroup().addTo(mapP); PLdraft = L.layerGroup().addTo(mapP);
+  renderPlanContext();
+  mapP.on('click', e => {
+    const ll = [+e.latlng.lat.toFixed(4), +e.latlng.lng.toFixed(4)];
+    if (PL.mode === 'pt') PL.pts = [ll]; else PL.pts.push(ll);
+    clearResults(); drawPlan();
+  });
+  drawPlan();
+}
+function renderPlanContext(hits) {
+  if (!mapP) return;
+  PLctx.clearLayers();
+  const hit = new Set((hits || []).map(c => c.b.id));
+  S.projects.forEach(p => drawProject(PLctx, p, { faded: !hit.has(p.id), w: hit.has(p.id) ? 7 : 4, r: hit.has(p.id) ? 10 : 7 }));
+}
+function drawPlan() {
+  if (!mapP) return;
+  PLdraft.clearLayers();
+  const pts = PL.pts;
+  if (PL.mode === 'line' && pts.length > 1) {
+    L.polyline(pts, { color: '#FFD400', weight: 12, opacity: .45, interactive: false }).addTo(PLdraft);
+    L.polyline(pts, { color: '#0A0A0A', weight: 4, dashArray: '10 8', interactive: false }).addTo(PLdraft);
+  }
+  pts.forEach((p, i) => L.marker(p, { icon: L.divIcon({ className: '', html: '<div class="vx"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }), interactive: false }).addTo(PLdraft));
+  const info = $('#drawInfo');
+  if (!pts.length) info.innerHTML = PL.mode === 'line' ? 'Click the map to draw the route' : 'Click the map to place the site';
+  else if (PL.mode === 'pt') info.innerHTML = `<span>Site at <b>${pts[0][0].toFixed(3)}, ${pts[0][1].toFixed(3)}</b></span>`;
+  else info.innerHTML = `<span><b>${pts.length}</b> points · <b>${routeKm(pts).toFixed(1)} km</b>${pts.length < 2 ? ' · add one more' : ''}</span>`;
+  const ready = PL.mode === 'pt' ? pts.length === 1 : pts.length >= 2;
+  $('#stepLocH').classList.toggle('done', ready);
+}
+function clearResults() { PL.result = null; $('#plResults').innerHTML = ''; if (PLres) PLres.clearLayers(); renderPlanContext(); }
+function buildNewProject() {
+  const eq = $$('#fEq .chip.on').map(b => b.dataset.eq);
+  const start = $('#fStart').value, end = $('#fEnd').value;
+  return {
+    id: 'KG-' + String(7000 + S.projects.filter(p => p.isNew).length + 1), u: $('#fUtil').value, name: $('#fName').value.trim() || 'Untitled project',
+    type: $('#fType').value, status: 'Registered', kv: +$('#fKv').value || 115, cost: +$('#fCost').value || 10, crew: +$('#fCrew').value || 10,
+    start, end, eq, src: 'Registered by Keystone Grid Constructors', county: 'Drawn in GridLock', isNew: true,
+    geom: PL.mode === 'pt' ? { k: 'pt', c: PL.pts[0] } : { k: 'line', c: PL.pts.slice() }
+  };
+}
+function runScan() {
+  const ready = PL.mode === 'pt' ? PL.pts.length === 1 : PL.pts.length >= 2;
+  if (!ready) { toast(PL.mode === 'pt' ? 'Place the site on the map first' : 'Draw at least two route points first'); return; }
+  const np = buildNewProject();
+  if (!np.start || !np.end || D(np.end) <= D(np.start)) { toast('Check the dates — demobilize must be after mobilize'); return; }
+  const steps = [
+    ['Normalizing your project geometry', 'EPSG:4326 → local km'],
+    ['Querying FERC eLibrary & SERTP 2026 plan', '1,626 filings'],
+    ['Cross-referencing FL · GA · AL PSC dockets', '472 dockets'],
+    ['Snapping route to HIFLD corridors', '94,112 segments'],
+    [`Running proximity + schedule detection vs ${S.projects.length} projects`, `R=${S.D} km · W=${S.T} d`],
+    ['Estimating shared-resource savings', 'crews · equipment · outages']
+  ];
+  openModal(`<div class="m-h"><div><div class="eyebrow" style="color:var(--y)">GridLock scan</div><h3 style="margin-top:4px">${esc(np.name)}</h3></div></div>
+    <div class="m-b"><div class="scan-steps">${steps.map((s, i) => `<div class="ss" id="ss${i}"><i></i>${s[0]}<small>${s[1]}</small></div>`).join('')}</div><div class="bigbar"><i id="scanBar"></i></div></div>`, true);
+  let i = 0;
+  const tick = () => {
+    if (i > 0) { const p = $('#ss' + (i - 1)); p.classList.remove('run'); p.classList.add('done'); p.querySelector('i').innerHTML = I('check', 12); }
+    $('#scanBar').style.width = (i / steps.length * 100) + '%';
+    if (i < steps.length) { $('#ss' + i).classList.add('run'); i++; setTimeout(tick, 380 + (i === 5 ? 300 : 0)); }
+    else setTimeout(() => { closeModal(); showResults(np); }, 350);
+  };
+  tick();
+}
+function showResults(np) {
+  const opts = { D: S.D, T: S.T };
+  const hits = S.projects.map(p => pair(np, p, opts)).filter(Boolean).sort((a, b) => b.score - a.score);
+  PL.result = { np, hits };
+  const save = hits.reduce((t, c) => t + c.savings, 0);
+  const crit = hits.filter(c => c.sev === 'critical').length;
+  const utils = new Set(hits.map(c => c.b.u));
+  let html = `<div class="res-h"><div class="eyebrow">Scan complete</div><h3>${hits.length ? `${hits.length} overlap${hits.length > 1 ? 's' : ''} found` : 'All clear'}</h3>
+    <p>${hits.length ? `Your project touches planned work from ${utils.size} utilit${utils.size > 1 ? 'ies' : 'y'}. ${crit ? `${crit} need${crit > 1 ? '' : 's'} coordination before mobilization.` : ''}` : 'No planned work nearby in your build window.'}</p>
+    <div class="rs"><div><b>${crit}</b><span>Critical</span></div><div><b>${utils.size}</b><span>Utilities</span></div><div><b style="color:var(--y)">${fmtM(save)}</b><span>Potential savings</span></div></div></div>`;
+  if (hits.length) {
+    html += hits.map((c, k) => `<div class="rc" data-hit="${k}"><div class="rc-top"><span class="sev ${c.sev}">${c.sev} · ${c.score}</span><span class="kind">${KIND_L[c.kind]}</span></div>
+      <div class="n">${esc(c.b.name)}</div><div class="u"><i style="background:${UTIL[c.b.u].color}"></i>${UTIL[c.b.u].name} · ${fmtD(c.b.start)} – ${fmtD(c.b.end)}</div>
+      <div class="why"><span class="tag">${I('pin', 12)}${fmtKm(c.d)} away</span><span class="tag">${I('clock', 12)}${timeText(c)}</span>${c.shared.length ? `<span class="tag">${I('users', 12)}${c.shared.length} shared equipment</span>` : ''}<span class="tag">${I('dollar', 12)}${fmtM(c.savings)}</span></div>
+      <div class="acts"><button class="btn k sm" data-coord="${k}">${I('send', 14)}Request coordination</button><button class="btn ghost sm" data-focus="${k}">${I('map', 14)}Show on map</button></div></div>`).join('');
+  } else html += `<div class="clean"><div class="big">${I('check', 26)}</div><b>No overlaps</b><br><span style="font-size:12.5px">Nothing within ${S.D} km or ${S.T} days of your window.</span></div>`;
+  html += `<button class="btn y block" id="btnRegister" style="margin-top:12px">${I('plus', 16)}Register project to the GridLock network</button>
+    <p style="font-size:11.5px;color:var(--mut);margin-top:8px;text-align:center">Registered projects are shared with affected utilities so they see you too.</p>`;
+  $('#plResults').innerHTML = html;
+  // map
+  renderPlanContext(hits);
+  PLres.clearLayers();
+  hits.forEach(c => {
+    if (c.d > 0.05) L.polyline([c.pa, c.pb], { color: SEV_C[c.sev], weight: 2, dashArray: '4 6', interactive: false }).addTo(PLres);
+    confPin(c, c.sev === 'critical').addTo(PLres).bindTooltip(`${esc(c.b.name)}<small>${KIND_L[c.kind]} · score ${c.score}</small>`, { className: 'gl-tip', direction: 'top', offset: [0, -10] });
+  });
+  const pts = [].concat(np.geom.k === 'pt' ? [np.geom.c] : np.geom.c, ...hits.map(c => c.b.geom.k === 'pt' ? [c.b.geom.c] : c.b.geom.c));
+  mapP.flyToBounds(L.latLngBounds(pts), { padding: [70, 70], maxZoom: 11, duration: .8 });
+  $('#plResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('#btnRegister').onclick = registerProject;
+}
+function registerProject() {
+  if (!PL.result) return;
+  const np = PL.result.np;
+  S.projects.push(np);
+  recompute();
+  $('#plResults').innerHTML = `<div class="res-h"><div class="eyebrow">Registered</div><h3>${esc(np.name)} is live</h3><p>${np.id} is now visible to ${new Set(PL.result.hits.map(c => c.b.u)).size || 'all'} affected utilit${PL.result.hits.length === 1 ? 'y' : 'ies'} and appears on the overlap map, timeline and registry.</p>
+    <div class="rs"><button class="btn y sm" data-go="map">${I('map', 14)}Open overlap map</button><button class="btn sm" style="background:#1a1a1a;color:#fff" data-go="timeline">${I('gantt', 14)}Timeline</button></div></div>`;
+  FEED.unshift(['g', `<b>Keystone Grid</b> registered “${esc(np.name)}”`, 'Just now']); renderFeed();
+  PL.pts = []; PL.result = null; PLres.clearLayers(); renderPlanContext(); drawPlan();
+  toast(`${np.id} registered · shared with affected utilities`);
+}
+$('#plResults').addEventListener('click', e => {
+  const r = PL.result; if (!r) return;
+  const co = e.target.closest('[data-coord]'), fo = e.target.closest('[data-focus]');
+  if (co) { const c = r.hits[+co.dataset.coord]; openCoord(c, 'Keystone Grid Constructors'); return; }
+  const k = fo ? +fo.dataset.focus : (e.target.closest('[data-hit]') ? +e.target.closest('[data-hit]').dataset.hit : null);
+  if (k !== null && r.hits[k] && mapP) {
+    const c = r.hits[k];
+    const pts = [].concat(c.a.geom.k === 'pt' ? [c.a.geom.c] : c.a.geom.c, c.b.geom.k === 'pt' ? [c.b.geom.c] : c.b.geom.c);
+    mapP.flyToBounds(L.latLngBounds(pts), { padding: [80, 80], maxZoom: 12, duration: .7 });
+  }
+});
+
+// ---------- sources ----------
+function renderSources() {
+  $('#srcs').innerHTML = SOURCES.map((s, i) => `<div class="card src" id="src${i}">
+    <div class="src-h"><div class="src-ic">${s.k}</div><div style="flex:1"><b>${s.name}</b><span>${s.desc}</span></div><span class="live ${s.st === 'ai' ? 'ai' : ''}" id="srcSt${i}">${s.st === 'ai' ? 'AI-extracted' : 'Live'}</span></div>
+    <div class="src-s"><div><b class="num" id="srcN${i}">${s.rec.toLocaleString()}</b><span>Records</span></div><div><b>${s.cov}</b><span>Coverage</span></div><div><b id="srcT${i}">${s.sync}</b><span>Last sync</span></div></div>
+    <div class="prog" id="srcP${i}"><i></i></div></div>`).join('');
+}
+function syncAll() {
+  const btn = $('#btnSync'); btn.disabled = true;
+  const pipe = $$('#pipe > div');
+  let i = 0, stage = 0;
+  const pstep = setInterval(() => { pipe.forEach((d, k) => d.classList.toggle('on', k === stage % 4)); stage++; }, 450);
+  const next = () => {
+    if (i >= SOURCES.length) {
+      clearInterval(pstep); pipe.forEach(d => d.classList.remove('on')); btn.disabled = false;
+      $('#syncTxt').textContent = 'Synced just now';
+      toast('Sync complete · 3 new filings · overlaps re-scored');
+      return;
+    }
+    const k = i, pr = $('#srcP' + k), bar = pr.querySelector('i'), st = $('#srcSt' + k);
+    pr.classList.add('run'); st.className = 'live run'; st.textContent = 'Syncing';
+    let w = 0; bar.style.width = '0%';
+    const t = setInterval(() => {
+      w += 12 + Math.random() * 18; bar.style.width = Math.min(100, w) + '%';
+      if (w >= 100) {
+        clearInterval(t); pr.classList.remove('run');
+        st.className = 'live ' + (SOURCES[k].st === 'ai' ? 'ai' : ''); st.textContent = SOURCES[k].st === 'ai' ? 'AI-extracted' : 'Live';
+        SOURCES[k].rec += Math.floor(Math.random() * 4); SOURCES[k].sync = 'just now';
+        $('#srcN' + k).textContent = SOURCES[k].rec.toLocaleString(); $('#srcT' + k).textContent = 'just now';
+        i++; next();
+      }
+    }, 90);
+  };
+  $('#syncTxt').textContent = 'Syncing sources…';
+  next();
+}
+
+// ---------- intro animation ----------
+function introLines() {
+  const svg = $('#introLines'), w = innerWidth, h = innerHeight;
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  const nodes = []; for (let i = 0; i < 16; i++) nodes.push([Math.random() * w, Math.random() * h]);
+  let out = '';
+  for (let i = 0; i < nodes.length; i++) {
+    const a = nodes[i], b = nodes[(i * 7 + 3) % nodes.length];
+    const mx = (a[0] + b[0]) / 2 + (Math.random() - .5) * 200, my = (a[1] + b[1]) / 2 + (Math.random() - .5) * 200;
+    out += `<path d="M${a[0]},${a[1]} Q${mx},${my} ${b[0]},${b[1]}" style="animation-duration:${2 + Math.random() * 3}s"/>`;
+  }
+  nodes.forEach((n, i) => out += `<circle cx="${n[0]}" cy="${n[1]}" r="${i % 5 === 0 ? 5 : 3}" class="${i % 5 === 0 ? 'hit' : ''}"/>`);
+  svg.innerHTML = out;
+}
+
+// ---------- wiring ----------
+function setRangeFill(el) { el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); }
+function init() {
+  hydrateIcons();
+  introLines();
+  $('#iProj').textContent = S.projects.length;
+  const enter = page => { $('#intro').classList.add('gone'); go(page); try { sessionStorage.setItem('gl.intro', '1'); } catch (e) {} };
+  $('#enter').onclick = () => enter(location.hash.slice(1) || 'dash');
+  $('#enterPlan').onclick = () => enter('plan');
+  try { if (sessionStorage.getItem('gl.intro')) $('#intro').classList.add('gone'); } catch (e) {}
+
+  // selects
+  const opts = Object.entries(UTIL).map(([k, u]) => `<option value="${k}">${u.name} (${u.state})</option>`).join('');
+  $('#fUtil').innerHTML = opts; $('#fUtil').value = 'GTC';
+  $('#tUtil').innerHTML += opts;
+  $('#fEq').innerHTML = EQUIP.map(e => `<button class="chip y ${['Bucket trucks', 'Line stringing rig', '80-ton crane'].includes(e) ? 'on' : ''}" data-eq="${e}">${e}</button>`).join('');
+  $('#fEq').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) { b.classList.toggle('on'); clearResults(); } });
+  ['#fName', '#fUtil', '#fType', '#fStart', '#fEnd', '#fKv', '#fCost', '#fCrew'].forEach(s => $(s).addEventListener('change', () => { if (PL.result) clearResults(); }));
+
+  // map controls
+  const rD = $('#rD'), rT = $('#rT');
+  [rD, rT].forEach(setRangeFill);
+  rD.addEventListener('input', () => { S.D = +rD.value; $('#vD').textContent = S.D + ' km'; setRangeFill(rD); recompute(); });
+  rT.addEventListener('input', () => { S.T = +rT.value; $('#vT').textContent = S.T + ' days'; setRangeFill(rT); recompute(); });
+  $('#modeChips').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; S.mode = b.dataset.m; $$('#modeChips .chip').forEach(c => c.classList.toggle('on', c === b)); if (S.selected && !visibleConflicts().find(c => c.id === S.selected)) closeDrawer(); recompute(); });
+  $('#cSame').addEventListener('change', e => { S.sameUtil = e.target.checked; recompute(); });
+  $('#utilToggles').addEventListener('click', e => { const b = e.target.closest('[data-ut]'); if (!b) return; S.utilOn[b.dataset.ut] = !S.utilOn[b.dataset.ut]; renderUtilToggles(); recompute(); });
+  $('#btnExport').onclick = exportCSV;
+  renderUtilToggles(); renderLegend($('#mapLegend')); renderLegend($('#planLegend'));
+
+  // timeline sort
+  $('#tlSort').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; S.tlSort = b.dataset.s; $$('#tlSort .chip').forEach(c => c.classList.toggle('on', c === b)); renderTimeline(); });
+
+  // table
+  ['#tSearch', '#tUtil', '#tStatus', '#tOnly'].forEach(s => $(s).addEventListener('input', renderTable));
+  $('#gsearch').addEventListener('keydown', e => { if (e.key === 'Enter') { $('#tSearch').value = e.target.value; go('projects'); renderTable(); } });
+
+  // plan
+  $('#drawMode').addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b) return; PL.mode = b.dataset.d; $$('#drawMode button').forEach(x => x.classList.toggle('on', x === b)); PL.pts = PL.mode === 'pt' && PL.pts.length ? [PL.pts[0]] : PL.pts; $('#planHint').innerHTML = I('pin', 14) + (PL.mode === 'pt' ? 'Click to place the site' : 'Click to add route points') + ' · <b>existing plans shown faded</b>'; clearResults(); drawPlan(); });
+  $('#dUndo').onclick = () => { PL.pts.pop(); clearResults(); drawPlan(); };
+  $('#dClear').onclick = () => { PL.pts = []; clearResults(); drawPlan(); };
+  $('#dSample').onclick = () => {
+    PL.mode = 'line'; $$('#drawMode button').forEach(x => x.classList.toggle('on', x.dataset.d === 'line'));
+    PL.pts = SAMPLE.map(p => p.slice()); clearResults(); drawPlan();
+    if (mapP) mapP.flyToBounds(L.latLngBounds(SAMPLE), { padding: [120, 120], duration: .6 });
+  };
+  $('#btnScan').onclick = runScan;
+
+  // sources
+  renderSources(); $('#btnSync').onclick = syncAll;
+
+  // workspace
+  $('#role').addEventListener('change', e => {
+    const v = e.target.value;
+    $('#greet').textContent = `${greeting()}, ${v}.`;
+    $('#avatar').textContent = v.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    toast(`Switched workspace to ${e.target.selectedOptions[0].text}`);
+  });
+  $('#greet').textContent = `${greeting()}, Keystone.`;
+
+  renderFeed();
+  recompute();
+  go(location.hash.slice(1) || 'dash');
+}
+function greeting() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; }
+init();
+</script>
+</body>
+</html>
