@@ -371,6 +371,51 @@ td .pid{font-size:12px;color:var(--mut2)}
 @keyframes tout{to{opacity:0;transform:translateY(6px)}}
 .nomap{position:absolute;inset:0;display:grid;place-items:center;color:var(--mut);font-size:13px;text-align:center;padding:24px}
 @media (max-width:1200px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.search{display:none}}
+
+/* round 3 */
+.dr-b>*,.sh-b>*{flex-shrink:0}
+.prog{opacity:0;transition:opacity .2s}.prog.run{opacity:1}
+.tl-bar.hot{box-shadow:none}
+.ci-main{min-width:0}
+.ci-p{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--k);min-width:0;line-height:1.45}
+.ci-p i{width:8px;height:8px;border-radius:2px;flex:none}
+.ci-p span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci .m{margin-top:6px}
+.seg.full{margin:0}.seg.full button{font-size:12px;padding:0 4px}
+.qc{display:flex;align-items:flex-end;gap:8px;height:210px}
+.qc-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;min-width:0}
+.qc-n{font-size:12px;font-weight:600;color:var(--k);min-height:16px}
+.qc-st{width:100%;max-width:34px;display:flex;flex-direction:column-reverse;border-radius:4px;overflow:hidden}
+.qc-st i{display:block}
+.qc-l{font-size:11.5px;color:var(--mut2);white-space:nowrap}
+.qc-col.now .qc-l{color:var(--k);font-weight:600}
+.search{position:relative}
+.sdrop{position:absolute;top:40px;left:0;right:0;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px -10px rgba(0,0,0,.2);padding:4px;display:none;z-index:50}
+.sdrop.on{display:block}
+.sdrop a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--tx)}
+.sdrop a:hover{background:var(--line2)}
+.sdrop a i{width:8px;height:8px;border-radius:2px;flex:none}
+.sdrop a span{flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sdrop a small{font-size:11.5px;color:var(--mut2)}
+.sdrop .empty{padding:10px;font-size:13px;color:var(--mut)}
+.cf-pin span{transition:transform .15s,box-shadow .15s}
+.cf-pin.hl span{transform:scale(1.45);box-shadow:0 0 0 2px var(--k),0 2px 6px rgba(0,0,0,.35)}
+.try{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--ys);border:1px solid var(--yb);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#713F12}
+.rc .meta{font-size:12.5px;color:var(--mut);margin:8px 0 12px;display:flex;flex-wrap:wrap;gap:2px 12px}
+.rc .meta b{color:var(--k);font-weight:600}
+
+/* one meaning per colour */
+.sev.moderate,.score.moderate{background:#F4F4F5;color:#3F3F46;border-color:#D4D4D8}
+.sev.low,.score.low{background:#fff;color:#A1A1AA;border-color:var(--line)}
+.hbar .fill.y{background:var(--k)}
+.metrics div.k{background:#fff}
+.reco .h span{background:var(--k);color:#fff}
+.ovb.p{background:var(--k);color:#fff;border:0}
+.chip.y.on{background:var(--k);color:#fff;border-color:var(--k)}
+.dr-t{margin-top:10px;padding-right:28px;display:flex;flex-direction:column;gap:4px}
+.dr-t .ci-p{font-size:15px;font-weight:600;align-items:flex-start}
+.dr-t .ci-p i{margin-top:7px}
+.dr-t .ci-p span{white-space:normal}
 </style>
 </head>
 <body>
@@ -393,10 +438,10 @@ td .pid{font-size:12px;color:var(--mut2)}
       <div class="ws">
         <label>Workspace</label>
         <select id="role">
-          <option value="Keystone">Keystone Grid Constructors · Contractor</option>
+          <option value="Keystone">Keystone Grid · Contractor</option>
           <option value="Peach State">Peach State Electric · Utility</option>
           <option value="Gulfline">Gulfline Energy · Utility</option>
-          <option value="SERTP">SERTP Planning Committee · Regulator</option>
+          <option value="SERTP">SERTP Committee · Regulator</option>
         </select>
         <div class="me"><div class="av" id="avatar">KG</div><div><b>Alex Rivera</b><span>Pre-construction lead</span></div></div>
       </div>
@@ -406,7 +451,7 @@ td .pid{font-size:12px;color:var(--mut2)}
   <main>
     <header class="top">
       <div class="crumb"><small id="crumbS">Southeast Tri-State · FL · GA · AL</small><b id="crumbT">Command Center</b></div>
-      <div class="search"><span data-i="search:16"></span><input id="gsearch" placeholder="Search projects, utilities, counties…"><kbd>⌘K</kbd></div>
+      <div class="search"><span data-i="search:16"></span><input id="gsearch" placeholder="Search projects, utilities, counties…"><kbd>⌘K</kbd><div class="sdrop" id="sdrop"></div></div>
       <div class="sync"><i></i><span id="syncTxt">Synced 12 min ago</span></div>
       <div class="pill-demo"><i></i>Demo data</div>
     </header>
@@ -416,7 +461,7 @@ td .pid{font-size:12px;color:var(--mut2)}
       <div class="hero">
         <div>
                     <h1 id="greet">Good afternoon, Keystone.</h1>
-          <p class="sub"><b id="heroCount">0 overlaps</b> between neighboring utilities are active across Florida, Georgia and Alabama. Coordinating them could free up an estimated <b id="heroSave">$0M</b> in shared crews, equipment and outage windows.</p>
+          <p class="sub"><b id="heroCount">0 overlaps</b> between neighboring utilities across FL, GA and AL, worth about <b id="heroSave">$0M</b> if they coordinate.</p>
         </div>
         <div class="hero-actions"><button class="btn ghost" data-go="map"><span data-i="map:16"></span>Open overlap map</button><button class="btn y" data-go="plan"><span data-i="plus:16"></span>Check a new project</button></div>
       </div>
@@ -424,7 +469,7 @@ td .pid{font-size:12px;color:var(--mut2)}
       <div class="grid2">
         <div class="card">
           <div class="card-h"><div><h3>Overlap pressure by quarter</h3><p>Conflict windows active in each quarter, stacked by severity</p></div>
-            <div class="legend"><span><i style="background:var(--crit)"></i>Critical</span><span><i style="background:var(--high)"></i>High</span><span><i style="background:var(--y)"></i>Moderate</span><span><i style="background:#D6D3C9"></i>Low</span></div></div>
+            <div class="legend"><span><i style="background:#DC2626"></i>Critical</span><span><i style="background:#EA580C"></i>High</span><span><i style="background:#71717A"></i>Moderate</span><span><i style="background:#D4D4D8"></i>Low</span></div></div>
           <div id="chartQ" class="chart"></div>
         </div>
         <div class="card">
@@ -453,16 +498,11 @@ td .pid{font-size:12px;color:var(--mut2)}
     <!-- ============ MAP ============ -->
     <section class="page full" id="p-map">
       <div class="mp-panel">
-        <div class="mp-head"><h2>Overlap Map</h2><p>Every public construction plan in the region, with overlaps flagged in real time as you tune the thresholds.</p></div>
+        <div class="mp-head"><h2>Overlap Map</h2><p>Every planned project in the region. Overlaps update as you change the filters.</p></div>
         <div class="ctl">
           <div class="rng"><label>Proximity radius <b id="vD">10 km</b></label><input type="range" id="rD" min="1" max="40" value="10"></div>
           <div class="rng"><label>Schedule window <b id="vT">90 days</b></label><input type="range" id="rT" min="0" max="365" step="15" value="90"></div>
-          <div class="chips" id="modeChips">
-            <button class="chip on" data-m="all">All overlaps</button>
-            <button class="chip" data-m="both">Space + Time</button>
-            <button class="chip" data-m="space">Proximity</button>
-            <button class="chip" data-m="time">Schedule</button>
-          </div>
+          <div class="seg full" id="modeChips"><button class="on" data-m="all">All</button><button data-m="both">Space + Time</button><button data-m="space">Proximity</button><button data-m="time">Schedule</button></div>
           <label class="tog"><input type="checkbox" id="cSame"><span class="sw"></span>Include same-utility overlaps</label>
           <div class="utils" id="utilToggles"></div>
         </div>
@@ -492,6 +532,7 @@ td .pid{font-size:12px;color:var(--mut2)}
         <h2>Plan &amp; Check</h2>
         <p>Sketch the project you're bidding on or planning. GridLock checks it against every public utility plan in the region and tells you who you'll run into — and what you could share.</p>
 
+        <div class="try"><span>New here? Load the example route and scan it.</span><button class="btn y sm" id="tryIt">Try example</button></div>
         <div class="step">
           <div class="step-h"><i>1</i>Project basics</div>
           <div class="fld"><label>Project name</label><input id="fName" value="Cairo–Havana 115kV Interconnect"></div>
@@ -646,15 +687,15 @@ function hydrateIcons(root = document) {
 
 // ---------- data ----------
 const UTIL = {
-  FPL: { name: 'Sunstate Power & Light', short: 'Sunstate P&L', state: 'FL', color: '#FFC700', ink: '#0A0A0A', contact: 'planning@sunstatepl.example' },
-  DEF: { name: 'Gulfline Energy', short: 'Gulfline', state: 'FL', color: '#0A0A0A', ink: '#FFFFFF', contact: 'grid-planning@gulfline.example' },
-  GP:  { name: 'Peach State Electric', short: 'Peach State', state: 'GA', color: '#2F6BFF', ink: '#FFFFFF', contact: 'tplanning@peachstate-electric.example' },
-  GTC: { name: 'Piedmont Transmission Co.', short: 'Piedmont', state: 'GA', color: '#8B5CF6', ink: '#FFFFFF', contact: 'coordination@piedmont-tx.example' },
-  APC: { name: 'Yellowhammer Power', short: 'Yellowhammer', state: 'AL', color: '#10A37F', ink: '#FFFFFF', contact: 'grid-projects@yellowhammer.example' }
+  FPL: { name: 'Sunstate Power & Light', short: 'Sunstate P&L', state: 'FL', color: '#DB2777', ink: '#FFFFFF', contact: 'planning@sunstatepl.example' },
+  DEF: { name: 'Gulfline Energy', short: 'Gulfline', state: 'FL', color: '#18181B', ink: '#FFFFFF', contact: 'grid-planning@gulfline.example' },
+  GP:  { name: 'Peach State Electric', short: 'Peach State', state: 'GA', color: '#2563EB', ink: '#FFFFFF', contact: 'tplanning@peachstate-electric.example' },
+  GTC: { name: 'Piedmont Transmission Co.', short: 'Piedmont', state: 'GA', color: '#7C3AED', ink: '#FFFFFF', contact: 'coordination@piedmont-tx.example' },
+  APC: { name: 'Yellowhammer Power', short: 'Yellowhammer', state: 'AL', color: '#16A34A', ink: '#FFFFFF', contact: 'grid-projects@yellowhammer.example' }
 };
 const EQUIP = ['Bucket trucks', 'Line stringing rig', '80-ton crane', 'Helicopter', 'Directional drill', 'Excavators', 'Transformer lowboy'];
-const STATUS_C = { 'Planned': '#B5B3AA', 'Permitting': '#F76B15', 'Approved': '#2F6BFF', 'In construction': '#22C55E', 'Registered': '#FFD400' };
-const SEV_C = { critical: '#E5484D', high: '#F76B15', moderate: '#EAB308', low: '#B5B3AA' };
+const STATUS_C = { 'Planned': '#D4D4D8', 'Permitting': '#A1A1AA', 'Approved': '#52525B', 'In construction': '#16A34A', 'Registered': '#EAB308' };
+const SEV_C = { critical: '#DC2626', high: '#EA580C', moderate: '#52525B', low: '#A1A1AA' };
 const KIND_L = { both: 'Space + Time', space: 'Proximity', time: 'Schedule' };
 
 const BASE = [
@@ -840,9 +881,9 @@ function timeText(c) { return c.overlap > 0 ? `${c.overlap} days concurrent` : `
 function confItem(c, sel) {
   return `<div class="ci ${sel ? 'sel' : ''}" data-conf="${c.id}">
     ${ring(c.score, c.sev)}
-    <div><div class="t">${esc(c.a.name)}<em>⇄</em>${esc(c.b.name)}</div>
-      <div class="m"><span class="sev ${c.sev}">${c.sev}</span><span class="kind">${KIND_L[c.kind]}</span>·<span>${fmtKm(c.d)}</span>·<span>${timeText(c)}</span></div></div>
-    <div class="s"><b>${fmtM(c.savings)}</b>est. savings</div></div>`;
+    <div class="ci-main"><div class="ci-p"><i style="background:${UTIL[c.a.u].color}"></i><span>${esc(c.a.name)}</span></div><div class="ci-p"><i style="background:${UTIL[c.b.u].color}"></i><span>${esc(c.b.name)}</span></div>
+      <div class="m"><span class="sev ${c.sev}">${c.sev}</span><span>${KIND_L[c.kind]}</span><span>·</span><span>${fmtKm(c.d)}</span><span>·</span><span>${timeText(c)}</span></div></div>
+    <div class="s"><b>${fmtM(c.savings)}</b>savings</div></div>`;
 }
 
 // ---------- dashboard ----------
@@ -861,22 +902,13 @@ function renderDash() {
     <div class="card kpi"><div class="l">Capital in overlap zones</div><div class="v num">$${Math.round(capital).toLocaleString()}M</div><div class="d">${inv.size} projects affected</div></div>
     <div class="card kpi"><div class="l">Est. coordination savings</div><div class="v num">${fmtM(save)}</div><div class="d">Shared crews and equipment</div></div>`;
   // quarters chart
-  const qs = []; let y = 2026, q = 4;
+  const qs = []; let y = 2026, q = 3;
   while (y < 2029 || (y === 2029 && q <= 2)) { qs.push({ l: `Q${q} ’${String(y).slice(2)}`, s: Date.UTC(y, (q - 1) * 3, 1), e: Date.UTC(y, q * 3, 1) }); if (++q > 4) { q = 1; y++; } }
   const order = ['critical', 'high', 'moderate', 'low'];
   const data = qs.map(Q => { const r = { critical: 0, high: 0, moderate: 0, low: 0 }; vis.forEach(c => { if (c.win[0] < Q.e && c.win[1] >= Q.s) r[c.sev]++; }); return r; });
-  const max = Math.max(4, ...data.map(r => order.reduce((t, k) => t + r[k], 0)));
-  const W = 640, H = 230, pl = 28, pb = 26, bw = (W - pl) / qs.length;
-  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none">`;
-  for (let i = 0; i <= 4; i++) { const yy = 8 + (H - pb - 8) * (1 - i / 4); svg += `<line x1="${pl}" x2="${W}" y1="${yy}" y2="${yy}" stroke="#EFEDE6"/><text x="0" y="${yy + 4}">${Math.round(max * i / 4)}</text>`; }
-  const nowX = pl + ((Date.UTC(2026, 8, 27) - qs[0].s) / (qs[qs.length - 1].e - qs[0].s)) * (W - pl);
-  data.forEach((r, i) => {
-    let yy = H - pb; const x = pl + i * bw + bw * 0.2, w = bw * 0.6;
-    order.forEach(k => { if (!r[k]) return; const h = (H - pb - 8) * r[k] / max; yy -= h; svg += `<rect x="${x}" y="${yy}" width="${w}" height="${h}" rx="3" fill="${k === 'low' ? '#D6D3C9' : SEV_C[k]}"><title>${qs[i].l}: ${r[k]} ${k}</title></rect>`; });
-    svg += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle">${qs[i].l}</text>`;
-  });
-  svg += `<line x1="${nowX}" x2="${nowX}" y1="4" y2="${H - pb}" stroke="#0A0A0A" stroke-dasharray="3 3"/><rect x="${nowX - 18}" y="0" width="36" height="14" rx="4" fill="#0A0A0A"/><text x="${nowX}" y="10" text-anchor="middle" style="fill:#FFD400;font-size:9px;font-weight:700">NOW</text></svg>`;
-  $('#chartQ').innerHTML = svg;
+  const tot = data.map(r => order.reduce((t, k) => t + r[k], 0));
+  const max = Math.max(1, ...tot), nowT = Date.UTC(2026, 8, 27);
+  $('#chartQ').innerHTML = `<div class="qc">${qs.map((Q, i) => { const now = nowT >= Q.s && nowT < Q.e; return `<div class="qc-col ${now ? 'now' : ''}" title="${Q.l}: ${tot[i]} overlaps"><span class="qc-n">${tot[i] || ''}</span><div class="qc-st" style="height:${tot[i] / max * 160}px">${order.map(k => data[i][k] ? `<i style="height:${data[i][k] / tot[i] * 100}%;background:${k === 'low' ? '#D4D4D8' : k === 'moderate' ? '#71717A' : SEV_C[k]}"></i>` : '').join('')}</div><span class="qc-l">${now ? 'Now' : Q.l}</span></div>`; }).join('')}</div>`;
   // border chart
   const groups = {};
   vis.forEach(c => { const a = UTIL[c.a.u].state, b = UTIL[c.b.u].state; const k = a === b ? `Within ${a}` : [a, b].sort().join(' ↔ '); groups[k] = (groups[k] || 0) + 1; });
@@ -897,7 +929,7 @@ const FEED = [
 function renderFeed() { $('#feed').innerHTML = FEED.map(f => `<div class="fi"><i class="${f[0]}"></i><div>${f[1]}<small>${f[2]}</small></div></div>`).join(''); }
 
 // ---------- main map ----------
-let mapM = null, LProj = null, LConf = null, projLayers = {};
+let mapM = null, LProj = null, LConf = null, projLayers = {}, confMarkers = {};
 function baseTiles(m) {
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors', maxZoom: 16 }).addTo(m);
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, pane: 'overlayPane', opacity: .9 }).addTo(m);
@@ -937,7 +969,7 @@ function confPin(c, big) {
 }
 function renderMainLayers() {
   if (!mapM) return;
-  LProj.clearLayers(); LConf.clearLayers(); projLayers = {};
+  LProj.clearLayers(); LConf.clearLayers(); projLayers = {}; confMarkers = {};
   const sel = S.conflicts.find(c => c.id === S.selected);
   activeProjects().forEach(p => {
     const hi = sel && (sel.a.id === p.id || sel.b.id === p.id);
@@ -948,11 +980,19 @@ function renderMainLayers() {
     if (sel && !on) return;
     if (c.d > 0.05) L.polyline([c.pa, c.pb], { color: SEV_C[c.sev], weight: 2, dashArray: '4 6', opacity: .9, interactive: false }).addTo(LConf);
     const m = confPin(c, on).addTo(LConf);
+    confMarkers[c.id] = m;
     m.bindTooltip(`${KIND_L[c.kind]} overlap · score ${c.score}<small>${fmtKm(c.d)} · ${timeText(c)}</small>`, { className: 'gl-tip', direction: 'top', offset: [0, -10] });
     m.on('click', e => { L.DomEvent.stopPropagation(e); selectConflict(c.id); });
   });
   const vis = visibleConflicts();
-  $('#mapStats').innerHTML = `<div><b>${activeProjects().length}</b>projects</div><div><b>${vis.filter(c => c.sev === 'critical').length}</b>critical</div><div class="y"><b>${fmtM(vis.reduce((t, c) => t + c.savings, 0))}</b>savings on the table</div>`;
+  $('#mapStats').innerHTML = `<div><b>${activeProjects().length}</b>projects</div><div><b>${vis.filter(c => c.sev === 'critical').length}</b>critical</div><div class="y"><b>${fmtM(vis.reduce((t, c) => t + c.savings, 0))}</b>potential savings</div>`;
+}
+function hlPin(id) {
+  Object.entries(confMarkers).forEach(([k, m]) => {
+    const el = m.getElement && m.getElement();
+    if (el && el.firstElementChild) el.firstElementChild.classList.toggle('hl', k === id);
+    m.setZIndexOffset(k === id ? 2000 : 1000);
+  });
 }
 function renderLegend(el) {
   el.innerHTML = `<b>Utilities</b>${Object.values(UTIL).map(u => `<div><span class="ln" style="background:${u.color}"></span>${u.name} <span style="color:var(--mut2);margin-left:auto">${u.state}</span></div>`).join('')}<div style="margin-top:4px"><span class="pn"></span>Flagged overlap</div>`;
@@ -1009,7 +1049,7 @@ function renderDrawer(c) {
   $('#drawer').innerHTML = `
     <div class="dr-h"><button class="icon-btn x" id="drClose">${I('x')}</button>
       <div style="display:flex;gap:8px;align-items:center"><span class="sev ${c.sev}">${c.sev}</span><span class="tag">${KIND_L[c.kind]} overlap</span>${c.crossState ? `<span class="tag">${UTIL[c.a.u].state} ↔ ${UTIL[c.b.u].state}</span>` : ''}</div>
-      <h3>${esc(c.a.name)} ⇄ ${esc(c.b.name)}</h3></div>
+      <div class="dr-t"><div class="ci-p"><i style="background:${UTIL[c.a.u].color}"></i><span>${esc(c.a.name)}</span></div><div class="ci-p"><i style="background:${UTIL[c.b.u].color}"></i><span>${esc(c.b.name)}</span></div></div></div>
     <div class="dr-b">
       <div class="metrics"><div class="k"><span>Score</span><b>${c.score}</b></div><div><span>Distance</span><b>${fmtKm(c.d)}</b></div><div><span>${c.overlap > 0 ? 'Concurrent' : 'Gap'}</span><b>${c.overlap > 0 ? c.overlap : c.gap}d</b></div><div><span>Savings</span><b>${fmtM(c.savings)}</b></div></div>
       <div><div class="sec-t">The two projects</div><div class="pc">${pcard(c.a)}${pcard(c.b)}</div></div>
@@ -1253,12 +1293,12 @@ function showResults(np) {
   const utils = new Set(hits.map(c => c.b.u));
   let html = `<div class="res-h"><div class="eyebrow">Scan complete</div><h3>${hits.length ? `${hits.length} overlap${hits.length > 1 ? 's' : ''} found` : 'All clear'}</h3>
     <p>${hits.length ? `Your project touches planned work from ${utils.size} utilit${utils.size > 1 ? 'ies' : 'y'}. ${crit ? `${crit} need${crit > 1 ? '' : 's'} coordination before mobilization.` : ''}` : 'No planned work nearby in your build window.'}</p>
-    <div class="rs"><div><b>${crit}</b><span>Critical</span></div><div><b>${utils.size}</b><span>Utilities</span></div><div><b>${fmtM(save)}</b><span>Potential savings</span></div></div></div>`;
+    <div class="rs"><div><b>${crit}</b><span>Critical</span></div><div><b>${utils.size}</b><span>Utilities</span></div><div><b>${fmtM(save)}</b><span>Savings</span></div></div></div>`;
   if (hits.length) {
     html += hits.map((c, k) => `<div class="rc" data-hit="${k}"><div class="rc-top"><span class="sev ${c.sev}">${c.sev} · ${c.score}</span><span class="kind">${KIND_L[c.kind]}</span></div>
       <div class="n">${esc(c.b.name)}</div><div class="u"><i style="background:${UTIL[c.b.u].color}"></i>${UTIL[c.b.u].name} · ${fmtD(c.b.start)} – ${fmtD(c.b.end)}</div>
-      <div class="why"><span class="tag">${I('pin', 12)}${fmtKm(c.d)} away</span><span class="tag">${I('clock', 12)}${timeText(c)}</span>${c.shared.length ? `<span class="tag">${I('users', 12)}${c.shared.length} shared equipment</span>` : ''}<span class="tag">${I('dollar', 12)}${fmtM(c.savings)}</span></div>
-      <div class="acts"><button class="btn k sm" data-coord="${k}">${I('send', 14)}Request coordination</button><button class="btn ghost sm" data-focus="${k}">${I('map', 14)}Show on map</button></div></div>`).join('');
+      <div class="meta"><b>${c.d < 0.05 ? 'Routes cross' : fmtKm(c.d) + ' away'}</b><span>${timeText(c)}</span>${c.shared.length ? `<span>${c.shared.length} shared equipment</span>` : ''}<span>${fmtM(c.savings)} savings</span></div>
+      <div class="acts"><button class="btn ghost sm" data-coord="${k}">${I('send', 14)}Coordinate</button><button class="btn ghost sm" data-focus="${k}">${I('map', 14)}Show on map</button></div></div>`).join('');
   } else html += `<div class="clean"><div class="big">${I('check', 26)}</div><b>No overlaps</b><br><span style="font-size:12.5px">Nothing within ${S.D} km or ${S.T} days of your window.</span></div>`;
   html += `<button class="btn y block" id="btnRegister" style="margin-top:12px">${I('plus', 16)}Register project to the GridLock network</button>
     <p style="font-size:11.5px;color:var(--mut);margin-top:8px;text-align:center">Registered projects are shared with affected utilities so they see you too.</p>`;
@@ -1353,7 +1393,7 @@ function init() {
   [rD, rT].forEach(setRangeFill);
   rD.addEventListener('input', () => { S.D = +rD.value; $('#vD').textContent = S.D + ' km'; setRangeFill(rD); recompute(); });
   rT.addEventListener('input', () => { S.T = +rT.value; $('#vT').textContent = S.T + ' days'; setRangeFill(rT); recompute(); });
-  $('#modeChips').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; S.mode = b.dataset.m; $$('#modeChips .chip').forEach(c => c.classList.toggle('on', c === b)); if (S.selected && !visibleConflicts().find(c => c.id === S.selected)) closeDrawer(); recompute(); });
+  $('#modeChips').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; S.mode = b.dataset.m; $$('#modeChips button').forEach(c => c.classList.toggle('on', c === b)); if (S.selected && !visibleConflicts().find(c => c.id === S.selected)) closeDrawer(); recompute(); });
   $('#cSame').addEventListener('change', e => { S.sameUtil = e.target.checked; recompute(); });
   $('#utilToggles').addEventListener('click', e => { const b = e.target.closest('[data-ut]'); if (!b) return; S.utilOn[b.dataset.ut] = !S.utilOn[b.dataset.ut]; renderUtilToggles(); recompute(); });
   $('#btnExport').onclick = exportCSV;
@@ -1364,7 +1404,7 @@ function init() {
 
   // table
   ['#tSearch', '#tUtil', '#tStatus', '#tOnly'].forEach(s => $(s).addEventListener('input', renderTable));
-  $('#gsearch').addEventListener('keydown', e => { if (e.key === 'Enter') { $('#tSearch').value = e.target.value; go('projects'); renderTable(); } });
+  $('#gsearch').addEventListener('keydown', e => { if (e.key === 'Enter') { $('#sdrop').classList.remove('on'); $('#tSearch').value = e.target.value; go('projects'); renderTable(); } });
 
   // plan
   $('#drawMode').addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b) return; PL.mode = b.dataset.d; $$('#drawMode button').forEach(x => x.classList.toggle('on', x === b)); PL.pts = PL.mode === 'pt' && PL.pts.length ? [PL.pts[0]] : PL.pts; $('#planHint').innerHTML = I('pin', 14) + (PL.mode === 'pt' ? 'Click to place the site' : 'Click to add route points') + ' · <b>existing plans shown faded</b>'; clearResults(); drawPlan(); });
@@ -1376,6 +1416,20 @@ function init() {
     if (mapP) mapP.flyToBounds(L.latLngBounds(SAMPLE), { padding: [120, 120], duration: .6 });
   };
   $('#btnScan').onclick = runScan;
+  $('#tryIt').onclick = () => { $('#dSample').click(); setTimeout(runScan, 350); };
+  $('#confList').addEventListener('mouseover', e => { const it = e.target.closest('[data-conf]'); hlPin(it ? it.dataset.conf : null); });
+  $('#confList').addEventListener('mouseleave', () => hlPin(null));
+  const renderSearch = () => {
+    const q = $('#gsearch').value.trim().toLowerCase(), d = $('#sdrop');
+    if (!q) { d.classList.remove('on'); return; }
+    const hits = S.projects.filter(p => (p.name + ' ' + p.id + ' ' + p.county + ' ' + UTIL[p.u].name).toLowerCase().includes(q)).slice(0, 7);
+    d.innerHTML = hits.length ? hits.map(p => `<a data-sp="${p.id}"><i style="background:${UTIL[p.u].color}"></i><span>${esc(p.name)}</span><small>${p.id}</small></a>`).join('') : '<div class="empty">No projects match</div>';
+    d.classList.add('on');
+  };
+  $('#gsearch').addEventListener('input', renderSearch);
+  $('#gsearch').addEventListener('focus', renderSearch);
+  document.addEventListener('mousedown', e => { if (!e.target.closest('.search')) $('#sdrop').classList.remove('on'); });
+  $('#sdrop').addEventListener('mousedown', e => { const a = e.target.closest('[data-sp]'); if (!a) return; e.preventDefault(); $('#sdrop').classList.remove('on'); $('#gsearch').blur(); openProject(a.dataset.sp); });
 
   // sources
   renderSources(); $('#btnSync').onclick = syncAll;
